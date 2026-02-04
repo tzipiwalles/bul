@@ -68,9 +68,12 @@ const MOCK_REVIEWS = [
   { id: 3, rating: 4, reviewer: 'דוד אברהם', date: '2025-12-05', text: 'שירות טוב מאוד, קצת יקר אבל שווה את המחיר.' },
 ]
 
-export default function ProfilePage({ params }: { params: { id: string } }) {
+export default function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const [isAppointmentOpen, setIsAppointmentOpen] = useState(false)
   const [isLeadOpen, setIsLeadOpen] = useState(false)
+  
+  // In Next.js 15, params is a Promise - but since we use mock data, we don't need to await it yet
+  // When connecting to Supabase, use: const { id } = await params; (and make the component async)
   
   const profile = MOCK_PROFILE
   const serviceType = profile.service_type
