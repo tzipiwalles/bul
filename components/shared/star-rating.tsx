@@ -9,6 +9,7 @@ interface StarRatingProps {
   size?: 'sm' | 'md' | 'lg'
   interactive?: boolean
   onChange?: (rating: number) => void
+  className?: string
 }
 
 export function StarRating({
@@ -17,6 +18,7 @@ export function StarRating({
   size = 'md',
   interactive = false,
   onChange,
+  className,
 }: StarRatingProps) {
   const sizeClasses = {
     sm: 'h-3 w-3',
@@ -31,7 +33,7 @@ export function StarRating({
   }
 
   return (
-    <div className="flex items-center gap-0.5">
+    <div className={cn("flex items-center gap-0.5", className)}>
       {Array.from({ length: maxRating }, (_, i) => {
         const isFilled = i < Math.floor(rating)
         const isPartial = i === Math.floor(rating) && rating % 1 !== 0
