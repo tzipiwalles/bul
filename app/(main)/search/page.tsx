@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { Search, SlidersHorizontal, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -89,7 +90,7 @@ export default function SearchPage() {
 
   // Function to inject ads into the results list
   const renderResultsWithAds = () => {
-    const items = []
+    const items: React.ReactNode[] = []
     let adIndex = 0
 
     MOCK_RESULTS.forEach((result, index) => {
