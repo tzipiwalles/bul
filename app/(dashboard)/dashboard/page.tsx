@@ -13,6 +13,7 @@ import {
   Users,
   TrendingUp
 } from 'lucide-react'
+import type { Profile } from '@/types/database'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -28,7 +29,7 @@ export default async function DashboardPage() {
     .from('profiles')
     .select('*')
     .eq('id', user.id)
-    .single()
+    .single() as { data: Profile | null }
 
   if (!profile) {
     // User is authenticated but doesn't have a profile yet
