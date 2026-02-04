@@ -10,7 +10,7 @@ import { MOCK_ADS } from '@/lib/ads-data'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types/database'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ISRAELI_CITIES, CATEGORIES } from '@/lib/constants'
+import { CITIES, CATEGORIES } from '@/lib/constants'
 import {
   Sheet,
   SheetContent,
@@ -221,7 +221,7 @@ export default function SearchPage() {
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
                       <SelectItem value="">כל הערים</SelectItem>
-                      {ISRAELI_CITIES.map(city => (
+                      {CITIES.map(city => (
                         <SelectItem key={city} value={city}>{city}</SelectItem>
                       ))}
                     </SelectContent>
@@ -238,7 +238,7 @@ export default function SearchPage() {
                     <SelectContent className="max-h-60">
                       <SelectItem value="">כל הקטגוריות</SelectItem>
                       {CATEGORIES.map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
