@@ -143,7 +143,7 @@ export default function AppointmentsPage() {
                   </div>
 
                   {apt.notes && (
-                    <p className="text-sm text-gray-500 mb-3">"{apt.notes}"</p>
+                    <p className="text-sm text-gray-500 mb-3">&ldquo;{apt.notes}&rdquo;</p>
                   )}
 
                   {apt.status === 'pending' && (

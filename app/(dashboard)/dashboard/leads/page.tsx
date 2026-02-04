@@ -141,7 +141,7 @@ export default function LeadsPage() {
                   </div>
 
                   <p className="text-sm text-gray-700 bg-white p-3 rounded-lg mb-3">
-                    "{lead.message}"
+                    &ldquo;{lead.message}&rdquo;
                   </p>
 
                   <div className="flex items-center justify-between">
