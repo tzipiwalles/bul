@@ -13,7 +13,8 @@ import {
   Heart,
   ArrowRight,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  Play
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { StarRating } from '@/components/shared/star-rating'
@@ -250,6 +251,31 @@ export default function ProfileContent({ profile, reviews }: ProfileContentProps
               {profile.description || 'אין תיאור זמין.'}
             </p>
           </section>
+
+          {/* Work Video */}
+          {profile.media_urls && profile.media_urls.length > 0 && (
+            <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <Play className="h-5 w-5 text-secondary" />
+                הצצה לעבודה
+              </h2>
+              <div className="space-y-4">
+                {profile.media_urls.map((url, index) => (
+                  <div key={index} className="rounded-xl overflow-hidden bg-gray-900 shadow-md">
+                    <video 
+                      controls 
+                      className="w-full aspect-video"
+                      poster={profile.avatar_url || undefined}
+                      preload="metadata"
+                    >
+                      <source src={url} type="video/mp4" />
+                      הדפדפן שלך אינו תומך בהצגת וידאו
+                    </video>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Reviews */}
           <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
