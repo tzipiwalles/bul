@@ -215,12 +215,12 @@ export default function SearchPage() {
                 {/* City Filter */}
                 <div className="space-y-2">
                   <Label>עיר</Label>
-                  <Select value={selectedCity || ''} onValueChange={(v) => setSelectedCity(v || null)}>
+                  <Select value={selectedCity || '__all__'} onValueChange={(v) => setSelectedCity(v === '__all__' ? null : v)}>
                     <SelectTrigger>
                       <SelectValue placeholder="כל הערים" />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
-                      <SelectItem value="">כל הערים</SelectItem>
+                      <SelectItem value="__all__">כל הערים</SelectItem>
                       {CITIES.map(city => (
                         <SelectItem key={city} value={city}>{city}</SelectItem>
                       ))}
@@ -231,12 +231,12 @@ export default function SearchPage() {
                 {/* Category Filter */}
                 <div className="space-y-2">
                   <Label>קטגוריה</Label>
-                  <Select value={selectedCategory || ''} onValueChange={(v) => setSelectedCategory(v || null)}>
+                  <Select value={selectedCategory || '__all__'} onValueChange={(v) => setSelectedCategory(v === '__all__' ? null : v)}>
                     <SelectTrigger>
                       <SelectValue placeholder="כל הקטגוריות" />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
-                      <SelectItem value="">כל הקטגוריות</SelectItem>
+                      <SelectItem value="__all__">כל הקטגוריות</SelectItem>
                       {CATEGORIES.map(cat => (
                         <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
                       ))}
@@ -247,12 +247,12 @@ export default function SearchPage() {
                 {/* Service Type Filter */}
                 <div className="space-y-2">
                   <Label>סוג שירות</Label>
-                  <Select value={selectedServiceType || ''} onValueChange={(v) => setSelectedServiceType(v || null)}>
+                  <Select value={selectedServiceType || '__all__'} onValueChange={(v) => setSelectedServiceType(v === '__all__' ? null : v)}>
                     <SelectTrigger>
                       <SelectValue placeholder="כל הסוגים" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">כל הסוגים</SelectItem>
+                      <SelectItem value="__all__">כל הסוגים</SelectItem>
                       <SelectItem value="appointment">קביעת תור</SelectItem>
                       <SelectItem value="project">פרויקטים</SelectItem>
                       <SelectItem value="emergency">חירום</SelectItem>
