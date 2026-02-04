@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Search, SlidersHorizontal, MapPin, Star, Phone, MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { BottomNav } from '@/components/layout/bottom-nav'
 import {
   Select,
   SelectContent,
@@ -82,7 +83,8 @@ const MOCK_RESULTS = [
 
 export default function SearchPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
+    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-4">
@@ -263,5 +265,7 @@ export default function SearchPage() {
         </div>
       </div>
     </div>
+    <BottomNav />
+    </>
   )
 }

@@ -1,10 +1,12 @@
 import Link from 'next/link'
 import { Search, MapPin, Star, ArrowLeft, Sparkles, TrendingUp, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { BottomNav } from '@/components/layout/bottom-nav'
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-blue-50">
+    <>
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 via-white to-blue-50 pb-20 md:pb-0">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -313,6 +315,8 @@ export default function HomePage() {
         </div>
       </footer>
     </div>
+    <BottomNav />
+    </>
   )
 }
 
