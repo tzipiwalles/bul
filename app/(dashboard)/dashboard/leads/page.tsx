@@ -92,7 +92,7 @@ export default function LeadsPage() {
               <p className="text-2xl font-bold text-gray-600">
                 {leads.length}
               </p>
-              <p className="text-xs text-gray-500">סה"כ פניות</p>
+              <p className="text-xs text-gray-500">סה״כ פניות</p>
             </CardContent>
           </Card>
         </div>

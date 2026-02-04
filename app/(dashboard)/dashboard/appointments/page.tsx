@@ -95,7 +95,7 @@ export default function AppointmentsPage() {
               <p className="text-2xl font-bold text-gray-600">
                 {appointments.length}
               </p>
-              <p className="text-xs text-gray-500">סה"כ</p>
+              <p className="text-xs text-gray-500">סה״כ</p>
             </CardContent>
           </Card>
         </div>
