@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
 export interface Professional {
-  id: number
+  id: string | number
   name: string
   category: string
   city: string
@@ -14,6 +14,7 @@ export interface Professional {
   isVerified: boolean
   tags: string[]
   imageUrl?: string
+  avatarUrl?: string | null
 }
 
 interface ProfessionalCardProps {
@@ -26,10 +27,10 @@ export function ProfessionalCard({ pro }: ProfessionalCardProps) {
       <div className="flex items-start gap-4">
         {/* Avatar */}
         <div className="relative flex-shrink-0">
-          <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center text-2xl font-bold text-primary shadow-inner">
-            {pro.imageUrl ? (
+          <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center text-2xl font-bold text-primary shadow-inner overflow-hidden">
+            {(pro.avatarUrl || pro.imageUrl) ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={pro.imageUrl} alt={pro.name} className="w-full h-full object-cover rounded-xl" />
+              <img src={pro.avatarUrl || pro.imageUrl} alt={pro.name} className="w-full h-full object-cover" />
             ) : (
               pro.name[0]
             )}
