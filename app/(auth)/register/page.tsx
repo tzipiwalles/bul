@@ -153,7 +153,7 @@ export default function RegisterPage() {
           description: data.description,
           avatar_url: avatarUrl,
           media_urls: mediaUrls,
-        })
+        } as any)
 
       if (profileError) {
         console.error('Profile error:', profileError)
