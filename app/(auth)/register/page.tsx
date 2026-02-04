@@ -138,26 +138,33 @@ export default function RegisterPage() {
       }
 
       // Step 4: Create profile
+      const profileData = {
+        id: userId,
+        email: data.email,
+        business_name: data.businessName,
+        phone: data.phone,
+        city: data.city,
+        gender: data.gender!,
+        role: data.role,
+        service_type: data.serviceType!,
+        categories: data.categories,
+        description: data.description || '',
+        avatar_url: avatarUrl,
+        media_urls: mediaUrls,
+      }
+      
+      console.log('Creating profile with data:', profileData)
+      
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert({
-          id: userId,
-          email: data.email,
-          business_name: data.businessName,
-          phone: data.phone,
-          city: data.city,
-          gender: data.gender!,
-          role: data.role,
-          service_type: data.serviceType!,
-          categories: data.categories,
-          description: data.description,
-          avatar_url: avatarUrl,
-          media_urls: mediaUrls,
-        } as any)
+        .insert(profileData as any)
 
       if (profileError) {
-        console.error('Profile error:', profileError)
-        setError('שגיאה ביצירת הפרופיל. נסה שוב.')
+        console.error('Profile error:', JSON.stringify(profileError, null, 2))
+        console.error('Profile error message:', profileError.message)
+        console.error('Profile error code:', profileError.code)
+        console.error('Profile error details:', profileError.details)
+        setError(`שגיאה ביצירת הפרופיל: ${profileError.message || 'נסה שוב'}`)
         setLoading(false)
         return
       }
