@@ -1,23 +1,6 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
-
-const CATEGORIES = [
-  { id: 'health', name: 'בריאות', icon: '🏥', description: 'רופאים, מטפלים, פיזיותרפיה ועוד', count: 120 },
-  { id: 'beauty', name: 'יופי וטיפוח', icon: '💇', description: 'פייטנים, ספרים, קוסמטיקאים', count: 85 },
-  { id: 'home', name: 'בית ושיפוצים', icon: '🏠', description: 'שיפוצניקים, חשמלאים, שרברבים', count: 200 },
-  { id: 'food', name: 'מזון ומסעדות', icon: '🍕', description: 'מסעדות, קייטרינג, אספקה', count: 150 },
-  { id: 'education', name: 'חינוך והוראה', icon: '📚', description: 'מורים פרטיים, גננות, שיעורי עזר', count: 90 },
-  { id: 'legal', name: 'משפטי ופיננסי', icon: '⚖️', description: 'עורכי דין, רואי חשבון, יועצים', count: 45 },
-  { id: 'events', name: 'אירועים ושמחות', icon: '🎉', description: 'אולמות, צלמים, תזמורות, הסעות', count: 110 },
-  { id: 'tech', name: 'טכנולוגיה', icon: '💻', description: 'מחשבים, טלפונים, בניית אתרים', count: 60 },
-  { id: 'transport', name: 'הסעות ותחבורה', icon: '🚗', description: 'נהגים, הסעות, משלוחים', count: 75 },
-  { id: 'cleaning', name: 'ניקיון ותחזוקה', icon: '🧹', description: 'חברות ניקיון, מתקנים', count: 95 },
-  { id: 'fashion', name: 'אופנה והלבשה', icon: '👔', description: 'חנויות בגדים, תופרים, חייטים', count: 55 },
-  { id: 'pets', name: 'חיות מחמד', icon: '🐕', description: 'וטרינרים, מספרות, מזון', count: 30 },
-  { id: 'furniture', name: 'ריהוט וציוד', icon: '🛋️', description: 'חנויות רהיטים, נגרים', count: 65 },
-  { id: 'photography', name: 'צילום ווידאו', icon: '📸', description: 'צלמים, עורכי וידאו', count: 80 },
-  { id: 'music', name: 'מוזיקה ונגינה', icon: '🎵', description: 'להקות, זמרים, DJ, מורים לנגינה', count: 70 },
-]
+import { CATEGORIES } from '@/lib/constants'
 
 export default function CategoriesPage() {
   return (
@@ -49,12 +32,9 @@ export default function CategoriesPage() {
                 <h2 className="font-bold text-gray-900 group-hover:text-primary transition-colors mb-1">
                   {category.name}
                 </h2>
-                <p className="text-sm text-gray-500 mb-2 line-clamp-2">
+                <p className="text-sm text-gray-500 line-clamp-2">
                   {category.description}
                 </p>
-                <span className="text-xs text-primary font-medium">
-                  {category.count}+ בעלי מקצוע
-                </span>
               </div>
             </div>
           </Link>

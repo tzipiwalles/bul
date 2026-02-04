@@ -15,29 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-
-const CITIES = [
-  'ירושלים',
-  'בני ברק',
-  'מודיעין עילית',
-  'ביתר עילית',
-  'אלעד',
-  'בית שמש',
-  'אשדוד',
-  'פתח תקווה',
-]
-
-const CATEGORIES = [
-  { id: 'health', name: 'בריאות' },
-  { id: 'beauty', name: 'יופי וטיפוח' },
-  { id: 'home', name: 'בית ושיפוצים' },
-  { id: 'food', name: 'מזון ומסעדות' },
-  { id: 'education', name: 'חינוך' },
-  { id: 'legal', name: 'משפטי' },
-  { id: 'events', name: 'אירועים' },
-  { id: 'tech', name: 'טכנולוגיה' },
-]
-
+import { CITIES, CATEGORIES } from '@/lib/constants'
 export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false)
 

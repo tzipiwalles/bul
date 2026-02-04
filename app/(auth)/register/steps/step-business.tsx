@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { ArrowRight, Calendar, Briefcase, AlertTriangle, Store } from 'lucide-react'
 import type { RegistrationData } from '../page'
 import type { ServiceType } from '@/types/database'
+import { CATEGORIES } from '@/lib/constants'
 
 interface StepBusinessProps {
   data: RegistrationData
@@ -39,19 +40,6 @@ const SERVICE_TYPES: { value: ServiceType; label: string; description: string; i
     description: 'פיצריה, חנות בגדים - מיקום פיזי',
     icon: <Store className="h-5 w-5" />,
   },
-]
-
-const CATEGORIES = [
-  { id: 'health', label: 'בריאות', icon: '🏥' },
-  { id: 'beauty', label: 'יופי וטיפוח', icon: '💇' },
-  { id: 'home', label: 'בית ושיפוצים', icon: '🏠' },
-  { id: 'food', label: 'מזון ומסעדות', icon: '🍕' },
-  { id: 'education', label: 'חינוך', icon: '📚' },
-  { id: 'legal', label: 'משפטי', icon: '⚖️' },
-  { id: 'events', label: 'אירועים', icon: '🎉' },
-  { id: 'tech', label: 'טכנולוגיה', icon: '💻' },
-  { id: 'transport', label: 'הסעות', icon: '🚗' },
-  { id: 'other', label: 'אחר', icon: '📋' },
 ]
 
 export function StepBusiness({ data, updateData, onNext, onPrev }: StepBusinessProps) {
@@ -133,7 +121,7 @@ export function StepBusiness({ data, updateData, onNext, onPrev }: StepBusinessP
                 }`}
               >
                 <span>{category.icon}</span>
-                <span>{category.label}</span>
+                <span>{category.name}</span>
               </button>
             )
           })}

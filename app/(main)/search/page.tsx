@@ -13,16 +13,7 @@ import {
 import { ProfessionalCard, Professional } from '@/components/cards/professional-card'
 import { SponsoredCard } from '@/components/ads/sponsored-card'
 import { MOCK_ADS } from '@/lib/ads-data'
-
-const CITIES = [
-  'כל הערים',
-  'ירושלים',
-  'בני ברק',
-  'מודיעין עילית',
-  'ביתר עילית',
-  'אלעד',
-  'בית שמש',
-]
+import { CITIES } from '@/lib/constants'
 
 const MOCK_RESULTS: Professional[] = [
   {

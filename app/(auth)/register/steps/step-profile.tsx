@@ -13,6 +13,7 @@ import {
 import { ArrowRight, User, Phone, MapPin } from 'lucide-react'
 import type { RegistrationData } from '../page'
 import type { Gender } from '@/types/database'
+import { CITIES } from '@/lib/constants'
 
 interface StepProfileProps {
   data: RegistrationData
@@ -20,24 +21,6 @@ interface StepProfileProps {
   onNext: () => void
   onPrev: () => void
 }
-
-const CITIES = [
-  'ירושלים',
-  'בני ברק',
-  'מודיעין עילית',
-  'ביתר עילית',
-  'אלעד',
-  'בית שמש',
-  'אשדוד',
-  'פתח תקווה',
-  'רכסים',
-  'צפת',
-  'טבריה',
-  'נתניה',
-  'חיפה',
-  'תל אביב',
-  'אחר',
-]
 
 export function StepProfile({ data, updateData, onNext, onPrev }: StepProfileProps) {
   const handleGenderChange = (value: string) => {

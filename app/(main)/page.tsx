@@ -11,17 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-
-const CATEGORIES = [
-  { id: 'health', name: 'בריאות', icon: '🏥', count: '120+' },
-  { id: 'beauty', name: 'יופי וטיפוח', icon: '💇', count: '85+' },
-  { id: 'home', name: 'בית ושיפוצים', icon: '🏠', count: '200+' },
-  { id: 'food', name: 'מזון ומסעדות', icon: '🍕', count: '150+' },
-  { id: 'education', name: 'חינוך', icon: '📚', count: '90+' },
-  { id: 'legal', name: 'משפטי', icon: '⚖️', count: '45+' },
-  { id: 'events', name: 'אירועים', icon: '🎉', count: '110+' },
-  { id: 'tech', name: 'טכנולוגיה', icon: '💻', count: '60+' },
-]
+import { CATEGORIES, CITIES } from '@/lib/constants'
 
 export default function HomePage() {
   return (
@@ -85,7 +75,7 @@ export default function HomePage() {
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {CATEGORIES.map((cat) => (
+          {CATEGORIES.slice(0, 8).map((cat) => (
             <Link 
               key={cat.id} 
               href={`/search?category=${cat.id}`}
@@ -93,7 +83,7 @@ export default function HomePage() {
             >
               <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">{cat.icon}</div>
               <h3 className="font-bold text-gray-900 mb-1">{cat.name}</h3>
-              <p className="text-xs text-gray-500">{cat.count} בעלי מקצוע</p>
+              <p className="text-xs text-gray-500 line-clamp-1">{cat.description}</p>
             </Link>
           ))}
         </div>
