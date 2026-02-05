@@ -59,7 +59,7 @@ function profileToProfessional(profile: Profile & { media_urls?: string[], galle
     serviceType: profile.service_type as Professional['serviceType'],
     gender: profile.gender as 'male' | 'female' | undefined,
     community: profile.community || undefined,
-    galleryImages: profile.gallery_urls || (profile.avatar_url ? [profile.avatar_url] : []),
+    galleryImages: profile.media_urls?.length ? profile.media_urls : (profile.avatar_url ? [profile.avatar_url] : []),
   }
 }
 

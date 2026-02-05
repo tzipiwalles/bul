@@ -64,12 +64,16 @@ export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProC
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isInView, setIsInView] = useState(false)
   const [isMuted, setIsMuted] = useState(true)
+  const [isPaused, setIsPaused] = useState(false)
+  const [progress, setProgress] = useState(0)
   const cardRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const autoPlayRef = useRef<NodeJS.Timeout | null>(null)
+  const progressRef = useRef<NodeJS.Timeout | null>(null)
   
   // Embla Carousel for smooth touch swiping
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
-    loop: false,
+    loop: true, // Enable loop for continuous slideshow
     direction: 'rtl',
     dragFree: false,
   })
@@ -85,6 +89,7 @@ export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProC
 
   const showCarousel = images.length > 1
   const hasVideoPreview = pro.hasVideo && pro.videoUrl
+  const SLIDE_DURATION = 4000 // 4 seconds per slide
 
   // Update current slide index when embla changes
   useEffect(() => {
@@ -92,6 +97,7 @@ export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProC
     
     const onSelect = () => {
       setCurrentImageIndex(emblaApi.selectedScrollSnap())
+      setProgress(0) // Reset progress on slide change
     }
     
     emblaApi.on('select', onSelect)
@@ -99,6 +105,35 @@ export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProC
       emblaApi.off('select', onSelect)
     }
   }, [emblaApi])
+
+  // Auto-slideshow like WhatsApp status
+  useEffect(() => {
+    if (!emblaApi || !isInView || isPaused || !showCarousel || hasVideoPreview) {
+      // Clear timers when not active
+      if (autoPlayRef.current) clearTimeout(autoPlayRef.current)
+      if (progressRef.current) clearInterval(progressRef.current)
+      return
+    }
+
+    // Progress bar animation
+    const progressInterval = 50 // Update every 50ms
+    let currentProgress = 0
+    
+    progressRef.current = setInterval(() => {
+      currentProgress += (progressInterval / SLIDE_DURATION) * 100
+      setProgress(Math.min(currentProgress, 100))
+    }, progressInterval)
+
+    // Auto-advance to next slide
+    autoPlayRef.current = setTimeout(() => {
+      emblaApi.scrollNext()
+    }, SLIDE_DURATION)
+
+    return () => {
+      if (autoPlayRef.current) clearTimeout(autoPlayRef.current)
+      if (progressRef.current) clearInterval(progressRef.current)
+    }
+  }, [emblaApi, isInView, isPaused, currentImageIndex, showCarousel, hasVideoPreview])
 
   // Intersection Observer for lazy loading and video autoplay
   useEffect(() => {
@@ -180,7 +215,33 @@ export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProC
           )}
 
           {/* Image/Video Carousel - 3:2 Aspect Ratio */}
-          <div className="relative aspect-[3/2] overflow-hidden bg-gray-100">
+          <div 
+            className="relative aspect-[3/2] overflow-hidden bg-gray-100"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+            onTouchStart={() => setIsPaused(true)}
+            onTouchEnd={() => setTimeout(() => setIsPaused(false), 1000)}
+          >
+            {/* WhatsApp-style Progress Bars */}
+            {showCarousel && !hasVideoPreview && images.length > 1 && (
+              <div className="absolute top-2 left-2 right-2 z-20 flex gap-1">
+                {images.map((_, i) => (
+                  <div key={i} className="flex-1 h-0.5 bg-white/30 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-white rounded-full transition-all duration-100 ease-linear"
+                      style={{ 
+                        width: i < currentImageIndex 
+                          ? '100%' 
+                          : i === currentImageIndex 
+                            ? `${progress}%` 
+                            : '0%' 
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Video Preview (if available) */}
             {hasVideoPreview && isInView ? (
               <div className="absolute inset-0 z-[5]">
@@ -223,7 +284,7 @@ export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProC
                   </div>
                 </div>
 
-                {/* Carousel Navigation */}
+                {/* Carousel Navigation - only show on hover, arrows work in loop mode */}
                 {showCarousel && (
                   <>
                     <button 
@@ -231,8 +292,7 @@ export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProC
                       className={cn(
                         "absolute left-2 top-1/2 -translate-y-1/2 z-10",
                         "w-8 h-8 rounded-full glass flex items-center justify-center",
-                        "opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95",
-                        currentImageIndex === 0 && "hidden"
+                        "opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95"
                       )}
                     >
                       <ChevronLeft className="h-5 w-5 text-gray-700" />
@@ -242,32 +302,11 @@ export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProC
                       className={cn(
                         "absolute right-2 top-1/2 -translate-y-1/2 z-10",
                         "w-8 h-8 rounded-full glass flex items-center justify-center",
-                        "opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95",
-                        currentImageIndex === images.length - 1 && "hidden"
+                        "opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95"
                       )}
                     >
                       <ChevronRight className="h-5 w-5 text-gray-700" />
                     </button>
-
-                    {/* Dots */}
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
-                      {images.map((_, i) => (
-                        <button
-                          key={i}
-                          onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            emblaApi?.scrollTo(i)
-                          }}
-                          className={cn(
-                            "h-1.5 rounded-full transition-all carousel-dot",
-                            i === currentImageIndex 
-                              ? "w-6 bg-white" 
-                              : "w-1.5 bg-white/60 hover:bg-white/80"
-                          )}
-                        />
-                      ))}
-                    </div>
                   </>
                 )}
               </>
