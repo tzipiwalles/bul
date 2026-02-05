@@ -191,7 +191,7 @@ export default function RegisterPage() {
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
           <Link href="/" className="text-3xl font-bold text-primary mb-2 block">
-            בול
+            קנ"ש
           </Link>
           <CardTitle className="text-2xl">{stepTitles[currentStep - 1]}</CardTitle>
           <CardDescription>

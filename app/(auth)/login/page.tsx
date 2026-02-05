@@ -76,7 +76,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <Link href="/" className="text-3xl font-bold text-primary mb-2 block">
-            בול
+            קנ"ש
           </Link>
           <CardTitle className="text-2xl">התחברות</CardTitle>
           <CardDescription>

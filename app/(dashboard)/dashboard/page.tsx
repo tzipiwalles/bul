@@ -41,7 +41,7 @@ export default async function DashboardPage() {
       {/* Header */}
       <header className="bg-white border-b sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="text-2xl font-bold text-primary">בול</Link>
+          <Link href="/" className="text-2xl font-bold text-primary">קנ"ש</Link>
           <div className="flex items-center gap-2">
             <Link href="/dashboard/settings">
               <Button variant="ghost" size="icon">

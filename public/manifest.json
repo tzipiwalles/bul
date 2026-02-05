@@ -1,11 +1,33 @@
 {
-  "name": "בול - מדריך בעלי מקצוע",
-  "short_name": "בול",
+  "name": "קנ\"ש - קהילת נותני שירות",
+  "short_name": "קנ\"ש",
   "description": "מצא בעלי מקצוע אמינים בקהילה החרדית",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#3b82f6",
+  "orientation": "portrait",
+  "background_color": "#0A2351",
+  "theme_color": "#0A2351",
   "dir": "rtl",
-  "lang": "he"
+  "lang": "he",
+  "categories": ["business", "lifestyle", "shopping"],
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ]
 }

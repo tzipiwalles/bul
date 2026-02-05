@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import Link from 'next/link'
-import { motion, AnimatePresence, PanInfo } from 'framer-motion'
+import { motion } from 'framer-motion'
+import useEmblaCarousel from 'embla-carousel-react'
 import { 
   Star, 
   MapPin, 
@@ -61,11 +62,17 @@ interface ProCardProps {
 
 export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [direction, setDirection] = useState(0)
   const [isInView, setIsInView] = useState(false)
   const [isMuted, setIsMuted] = useState(true)
   const cardRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
+  
+  // Embla Carousel for smooth touch swiping
+  const [emblaRef, emblaApi] = useEmblaCarousel({ 
+    loop: false,
+    direction: 'rtl',
+    dragFree: false,
+  })
   
   // Build image array - for females (modesty rules), only show work samples/logos
   const images = pro.galleryImages?.length 
@@ -78,6 +85,20 @@ export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProC
 
   const showCarousel = images.length > 1
   const hasVideoPreview = pro.hasVideo && pro.videoUrl
+
+  // Update current slide index when embla changes
+  useEffect(() => {
+    if (!emblaApi) return
+    
+    const onSelect = () => {
+      setCurrentImageIndex(emblaApi.selectedScrollSnap())
+    }
+    
+    emblaApi.on('select', onSelect)
+    return () => {
+      emblaApi.off('select', onSelect)
+    }
+  }, [emblaApi])
 
   // Intersection Observer for lazy loading and video autoplay
   useEffect(() => {
@@ -102,34 +123,17 @@ export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProC
     return () => observer.disconnect()
   }, [])
 
-  const handleDragEnd = useCallback((_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    const threshold = 50
-    if (info.offset.x > threshold && currentImageIndex > 0) {
-      setDirection(-1)
-      setCurrentImageIndex(prev => prev - 1)
-    } else if (info.offset.x < -threshold && currentImageIndex < images.length - 1) {
-      setDirection(1)
-      setCurrentImageIndex(prev => prev + 1)
-    }
-  }, [currentImageIndex, images.length])
-
-  const nextImage = (e: React.MouseEvent) => {
+  const nextImage = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (currentImageIndex < images.length - 1) {
-      setDirection(1)
-      setCurrentImageIndex(prev => prev + 1)
-    }
-  }
+    emblaApi?.scrollNext()
+  }, [emblaApi])
 
-  const prevImage = (e: React.MouseEvent) => {
+  const prevImage = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (currentImageIndex > 0) {
-      setDirection(-1)
-      setCurrentImageIndex(prev => prev - 1)
-    }
-  }
+    emblaApi?.scrollPrev()
+  }, [emblaApi])
 
   const handleStoryClick = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -150,23 +154,6 @@ export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProC
 
   const ServiceIcon = pro.serviceType ? SERVICE_CONFIG[pro.serviceType]?.icon : null
 
-  const slideVariants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 300 : -300,
-      opacity: 0
-    }),
-    center: {
-      zIndex: 1,
-      x: 0,
-      opacity: 1
-    },
-    exit: (direction: number) => ({
-      zIndex: 0,
-      x: direction < 0 ? 300 : -300,
-      opacity: 0
-    })
-  }
-
   return (
     <motion.div
       ref={cardRef}
@@ -178,7 +165,7 @@ export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProC
       <Link href={`/profile/${pro.id}`} className="block group">
         <div 
           className={cn(
-            "bg-white rounded-2xl overflow-hidden transition-all duration-300",
+            "bg-white rounded-2xl overflow-hidden transition-all duration-300 card-press",
             "shadow-sm group-hover:shadow-xl group-hover:shadow-primary/10",
             pro.isSponsored && "ring-2 ring-yellow-400/50 relative"
           )}
@@ -219,33 +206,22 @@ export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProC
               </div>
             ) : images.length > 0 ? (
               <>
-                <AnimatePresence initial={false} custom={direction}>
-                  <motion.div
-                    key={currentImageIndex}
-                    custom={direction}
-                    variants={slideVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    transition={{
-                      x: { type: "spring", stiffness: 300, damping: 30 },
-                      opacity: { duration: 0.2 }
-                    }}
-                    drag={showCarousel ? "x" : false}
-                    dragConstraints={{ left: 0, right: 0 }}
-                    dragElastic={1}
-                    onDragEnd={handleDragEnd}
-                    className="absolute inset-0"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={images[currentImageIndex]}
-                      alt={pro.name}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  </motion.div>
-                </AnimatePresence>
+                {/* Embla Carousel for smooth touch swiping */}
+                <div className="absolute inset-0 overflow-hidden" ref={emblaRef}>
+                  <div className="flex h-full">
+                    {images.map((img, i) => (
+                      <div key={i} className="flex-[0_0_100%] min-w-0 h-full">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={img}
+                          alt={`${pro.name} - ${i + 1}`}
+                          className="w-full h-full object-cover"
+                          loading={i === 0 ? 'eager' : 'lazy'}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
                 {/* Carousel Navigation */}
                 {showCarousel && (
@@ -255,7 +231,7 @@ export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProC
                       className={cn(
                         "absolute left-2 top-1/2 -translate-y-1/2 z-10",
                         "w-8 h-8 rounded-full glass flex items-center justify-center",
-                        "opacity-0 group-hover:opacity-100 transition-all hover:scale-110",
+                        "opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95",
                         currentImageIndex === 0 && "hidden"
                       )}
                     >
@@ -266,7 +242,7 @@ export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProC
                       className={cn(
                         "absolute right-2 top-1/2 -translate-y-1/2 z-10",
                         "w-8 h-8 rounded-full glass flex items-center justify-center",
-                        "opacity-0 group-hover:opacity-100 transition-all hover:scale-110",
+                        "opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95",
                         currentImageIndex === images.length - 1 && "hidden"
                       )}
                     >
@@ -276,13 +252,18 @@ export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProC
                     {/* Dots */}
                     <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
                       {images.map((_, i) => (
-                        <div
+                        <button
                           key={i}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            emblaApi?.scrollTo(i)
+                          }}
                           className={cn(
                             "h-1.5 rounded-full transition-all carousel-dot",
                             i === currentImageIndex 
                               ? "w-6 bg-white" 
-                              : "w-1.5 bg-white/60"
+                              : "w-1.5 bg-white/60 hover:bg-white/80"
                           )}
                         />
                       ))}

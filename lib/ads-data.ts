@@ -12,7 +12,7 @@ export const MOCK_ADS: Ad[] = [
   {
     id: '1',
     title: 'הלוואות לכל מטרה',
-    description: 'ריביות אטרקטיביות ופריסת תשלומים נוחה ללקוחות בול.',
+    description: 'ריביות אטרקטיביות ופריסת תשלומים נוחה ללקוחות קנ"ש.',
     image_url: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=800&auto=format&fit=crop&q=60',
     link_url: '#',
     placement: 'sidebar',

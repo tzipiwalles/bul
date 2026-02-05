@@ -300,7 +300,7 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
           >
             {/* Badge */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}

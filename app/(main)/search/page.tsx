@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useEffect, useState, Suspense } from 'react'
+import React, { useEffect, useState, Suspense, useRef, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, SlidersHorizontal, X, Calendar, Wrench, AlertTriangle, Store, Play } from 'lucide-react'
+import { Search, SlidersHorizontal, X, Calendar, Wrench, AlertTriangle, Store, Play, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ProCard, Professional, ProCardSkeleton } from '@/components/cards/pro-card'
@@ -116,9 +116,12 @@ function VideoViewer({ pro, onClose }: { pro: Professional | null; onClose: () =
   )
 }
 
+const ITEMS_PER_PAGE = 12
+
 function SearchContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const loadMoreRef = useRef<HTMLDivElement>(null)
   
   // Initialize from URL params
   const initialServiceType = searchParams.get('serviceType')
@@ -128,6 +131,10 @@ function SearchContent() {
   
   const [professionals, setProfessionals] = useState<Professional[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+  const [page, setPage] = useState(0)
+  const [totalCount, setTotalCount] = useState(0)
   const [searchQuery, setSearchQuery] = useState(initialQuery || '')
   const [selectedCity, setSelectedCity] = useState<string | null>(initialCity)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCategory)
@@ -151,47 +158,95 @@ function SearchContent() {
     return 'בעלי מקצוע'
   }
 
+  // Build query with filters (for data fetching)
+  const buildQuery = useCallback((supabase: ReturnType<typeof createClient>) => {
+    let query = supabase
+      .from('profiles')
+      .select('*')
+      .eq('is_active', true)
+    
+    // Apply search filter
+    if (searchQuery) {
+      query = query.or(`business_name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%`)
+    }
+    
+    // Apply city filter
+    if (selectedCity) {
+      query = query.eq('city', selectedCity)
+    }
+    
+    // Apply category filter
+    if (selectedCategory) {
+      query = query.contains('categories', [selectedCategory])
+    }
+    
+    // Apply service type filter
+    if (selectedServiceType) {
+      query = query.eq('service_type', selectedServiceType)
+    }
+    
+    // Apply community filter
+    if (selectedCommunity) {
+      query = query.eq('community', selectedCommunity)
+    }
+    
+    // Apply verified filter
+    if (onlyVerified) {
+      query = query.eq('is_verified', true)
+    }
+    
+    return query
+  }, [searchQuery, selectedCity, selectedCategory, selectedServiceType, selectedCommunity, onlyVerified])
+
+  // Build count query (separate to avoid double select)
+  const buildCountQuery = useCallback((supabase: ReturnType<typeof createClient>) => {
+    let query = supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_active', true)
+    
+    if (searchQuery) {
+      query = query.or(`business_name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%`)
+    }
+    if (selectedCity) {
+      query = query.eq('city', selectedCity)
+    }
+    if (selectedCategory) {
+      query = query.contains('categories', [selectedCategory])
+    }
+    if (selectedServiceType) {
+      query = query.eq('service_type', selectedServiceType)
+    }
+    if (selectedCommunity) {
+      query = query.eq('community', selectedCommunity)
+    }
+    if (onlyVerified) {
+      query = query.eq('is_verified', true)
+    }
+    
+    return query
+  }, [searchQuery, selectedCity, selectedCategory, selectedServiceType, selectedCommunity, onlyVerified])
+
+  // Initial fetch
   useEffect(() => {
     async function fetchProfessionals() {
       setLoading(true)
+      setProfessionals([])
+      setPage(0)
+      setHasMore(true)
+      setTotalCount(0)
+      
       const supabase = createClient()
       
-      let query = supabase
-        .from('profiles')
-        .select('*')
-        .eq('is_active', true)
+      // Get total count first
+      const { count } = await buildCountQuery(supabase)
+      setTotalCount(count || 0)
       
-      // Apply search filter
-      if (searchQuery) {
-        query = query.or(`business_name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%`)
-      }
-      
-      // Apply city filter
-      if (selectedCity) {
-        query = query.eq('city', selectedCity)
-      }
-      
-      // Apply category filter
-      if (selectedCategory) {
-        query = query.contains('categories', [selectedCategory])
-      }
-      
-      // Apply service type filter
-      if (selectedServiceType) {
-        query = query.eq('service_type', selectedServiceType)
-      }
-      
-      // Apply community filter
-      if (selectedCommunity) {
-        query = query.eq('community', selectedCommunity)
-      }
-      
-      // Apply verified filter
-      if (onlyVerified) {
-        query = query.eq('is_verified', true)
-      }
-      
-      const { data, error } = await query.limit(100)
+      // Get first page of data
+      const query = buildQuery(supabase)
+      const { data, error } = await query
+        .order('rating', { ascending: false })
+        .range(0, ITEMS_PER_PAGE - 1)
       
       if (error) {
         console.error('Error fetching professionals:', error)
@@ -206,21 +261,71 @@ function SearchContent() {
         
         // Sort: videos first, then by rating
         results.sort((a, b) => {
-          // Videos first
           if (a.hasVideo && !b.hasVideo) return -1
           if (!a.hasVideo && b.hasVideo) return 1
-          // Then by rating
           return b.rating - a.rating
         })
         
         setProfessionals(results)
+        setHasMore(data.length === ITEMS_PER_PAGE)
       }
       
       setLoading(false)
     }
     
     fetchProfessionals()
-  }, [searchQuery, selectedCity, selectedCategory, selectedServiceType, selectedCommunity, onlyVerified, onlyWithVideo])
+  }, [buildQuery, buildCountQuery, onlyWithVideo])
+
+  // Load more function for infinite scroll
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return
+    
+    setLoadingMore(true)
+    const nextPage = page + 1
+    const from = nextPage * ITEMS_PER_PAGE
+    const to = from + ITEMS_PER_PAGE - 1
+    
+    const supabase = createClient()
+    const query = buildQuery(supabase)
+    
+    const { data, error } = await query
+      .order('rating', { ascending: false })
+      .range(from, to)
+    
+    if (error) {
+      console.error('Error loading more:', error)
+    } else if (data) {
+      let results = data.map(profileToProfessional)
+      
+      if (onlyWithVideo) {
+        results = results.filter(p => p.hasVideo)
+      }
+      
+      setProfessionals(prev => [...prev, ...results])
+      setPage(nextPage)
+      setHasMore(data.length === ITEMS_PER_PAGE)
+    }
+    
+    setLoadingMore(false)
+  }, [loadingMore, hasMore, page, buildQuery, onlyWithVideo])
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+          loadMore()
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    )
+    
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current)
+    }
+    
+    return () => observer.disconnect()
+  }, [hasMore, loadingMore, loadMore])
   
   const clearAllFilters = () => {
     setSelectedCity(null)
@@ -473,7 +578,7 @@ function SearchContent() {
                     className="w-full h-12 text-base font-bold bg-primary hover:bg-primary/90"
                     onClick={() => setIsFilterOpen(false)}
                   >
-                    הצג {professionals.length} תוצאות
+                    הצג {totalCount} תוצאות
                   </Button>
                 </div>
               </div>
@@ -586,7 +691,7 @@ function SearchContent() {
               )}
               {getPageTitle()}
               <span className="text-sm font-normal text-gray-500">
-                ({loading ? '...' : professionals.length} תוצאות)
+                ({loading ? '...' : totalCount} תוצאות)
               </span>
             </h1>
           </div>
@@ -603,7 +708,34 @@ function SearchContent() {
                 <ProCardSkeleton />
               </>
             ) : professionals.length > 0 ? (
-              renderResultsWithAds()
+              <>
+                {renderResultsWithAds()}
+                
+                {/* Load More Trigger for Infinite Scroll */}
+                <div 
+                  ref={loadMoreRef} 
+                  className="col-span-full flex justify-center py-8"
+                >
+                  {loadingMore ? (
+                    <div className="flex items-center gap-3">
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                      <span className="text-sm text-muted-foreground">טוען עוד תוצאות...</span>
+                    </div>
+                  ) : hasMore ? (
+                    <Button 
+                      variant="outline" 
+                      onClick={() => loadMore()}
+                      className="mx-auto"
+                    >
+                      טען עוד תוצאות
+                    </Button>
+                  ) : (
+                    <div className="text-sm text-muted-foreground py-4">
+                      הצגת כל {professionals.length} התוצאות
+                    </div>
+                  )}
+                </div>
+              </>
             ) : (
               <div className="col-span-full text-center py-16 bg-white rounded-2xl border border-gray-100">
                 <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">

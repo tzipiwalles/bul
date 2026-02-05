@@ -10,7 +10,7 @@ export default function AboutPage() {
         <Link href="/" className="text-gray-500 hover:text-primary transition-colors">
           <ArrowRight className="h-6 w-6" />
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">אודות בול</h1>
+        <h1 className="text-2xl font-bold text-gray-900">אודות קנ"ש</h1>
       </div>
 
       {/* Hero */}
@@ -20,7 +20,7 @@ export default function AboutPage() {
             מחברים בין אנשים לשירותים
           </h2>
           <p className="text-lg text-blue-100 leading-relaxed">
-            בול היא הפלטפורמה המובילה לחיפוש בעלי מקצוע אמינים בקהילה החרדית.
+            קנ"ש היא הפלטפורמה המובילה לחיפוש בעלי מקצוע אמינים בקהילה החרדית.
             אנחנו מאמינים שכל אחד מגיע לשירות מקצועי, אמין וצנוע.
           </p>
         </div>
@@ -45,7 +45,7 @@ export default function AboutPage() {
           </div>
           <h3 className="text-xl font-bold text-gray-900 mb-2">הקהילה שלנו</h3>
           <p className="text-gray-600 leading-relaxed">
-            אלפי בעלי מקצוע ומאות אלפי משתמשים סומכים על בול
+            אלפי בעלי מקצוע ומאות אלפי משתמשים סומכים על קנ"ש
             כדי למצוא את השירות המתאים להם.
           </p>
         </div>

@@ -23,27 +23,19 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full glass border-b border-white/20 shadow-sm">
-      <div className="container flex h-16 items-center justify-between px-4">
+      <div className="container flex h-18 items-center justify-between px-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 transition-transform hover:scale-[1.02]">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-blue-800 shadow-lg shadow-primary/20">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-6 w-6 text-white"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <circle cx="12" cy="12" r="3" fill="currentColor" />
-            </svg>
+        <Link href="/" className="flex items-center gap-3 transition-transform hover:scale-[1.02]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img 
+            src="https://www.assetbridge.app/api/assets/Kanash/svg" 
+            alt="קנ״ש" 
+            className="h-12 w-12 rounded-xl shadow-md"
+          />
+          <div className="hidden sm:flex flex-col leading-tight">
+            <span className="text-xl font-bold text-primary">קנ"ש</span>
+            <span className="text-xs text-gray-500">קהילת נותני שירות</span>
           </div>
-          <span className="hidden text-2xl font-bold bg-gradient-to-r from-primary to-blue-700 bg-clip-text text-transparent sm:inline-block">
-            בול
-          </span>
         </Link>
 
         {/* Desktop Search Bar */}

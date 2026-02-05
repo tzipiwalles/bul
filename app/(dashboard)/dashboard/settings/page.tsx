@@ -19,6 +19,7 @@ import { CITIES } from '@/lib/constants'
 import { CategoryPicker } from '@/components/category-picker'
 import { COMMUNITIES } from '@/lib/communities'
 import { createClient } from '@/lib/supabase/client'
+import { compressImage, isImageFile, formatFileSize } from '@/lib/image-utils'
 import type { Profile, ServiceType, Gender } from '@/types/database'
 
 export default function SettingsPage() {
@@ -73,7 +74,7 @@ export default function SettingsPage() {
     loadProfile()
   }, [supabase])
 
-  // Handle avatar upload
+  // Handle avatar upload with compression
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -85,13 +86,39 @@ export default function SettingsPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${user.id}/avatar-${Date.now()}.${fileExt}`
+      // Delete old avatar if exists
+      if (profile.avatar_url) {
+        try {
+          // Extract file path from URL (after /avatars/)
+          const urlParts = profile.avatar_url.split('/avatars/')
+          if (urlParts[1]) {
+            const oldFilePath = decodeURIComponent(urlParts[1])
+            await supabase.storage.from('avatars').remove([oldFilePath])
+            console.log('Old avatar deleted:', oldFilePath)
+          }
+        } catch (deleteError) {
+          console.warn('Could not delete old avatar:', deleteError)
+          // Continue with upload even if delete fails
+        }
+      }
+
+      // Compress image to WebP format
+      let processedFile = file
+      if (isImageFile(file)) {
+        console.log(`Compressing avatar: ${formatFileSize(file.size)}`)
+        processedFile = await compressImage(file, {
+          maxWidthOrHeight: 400, // Smaller for avatars
+          quality: 0.85,
+        })
+        console.log(`Compressed to: ${formatFileSize(processedFile.size)}`)
+      }
+
+      const fileName = `${user.id}/avatar-${Date.now()}.webp`
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, { upsert: true })
+        .upload(fileName, processedFile, { upsert: true })
 
       if (uploadError) throw uploadError
 
@@ -102,7 +129,7 @@ export default function SettingsPage() {
 
       // Update profile
       setProfile(prev => ({ ...prev, avatar_url: urlData.publicUrl }))
-      setMessage({ type: 'success', text: 'התמונה הועלתה בהצלחה' })
+      setMessage({ type: 'success', text: 'התמונה הועלתה בהצלחה (WebP)' })
     } catch (error) {
       console.error('Avatar upload error:', error)
       setMessage({ type: 'error', text: 'שגיאה בהעלאת התמונה' })
@@ -111,7 +138,28 @@ export default function SettingsPage() {
     }
   }
 
-  // Handle media upload (images/videos)
+  // Remove avatar (delete from storage + clear URL)
+  const removeAvatar = async () => {
+    if (!profile.avatar_url) return
+    
+    try {
+      // Extract file path from URL
+      const urlParts = profile.avatar_url.split('/avatars/')
+      if (urlParts[1]) {
+        const filePath = decodeURIComponent(urlParts[1])
+        await supabase.storage.from('avatars').remove([filePath])
+        console.log('Avatar deleted from storage:', filePath)
+      }
+    } catch (deleteError) {
+      console.warn('Could not delete avatar from storage:', deleteError)
+    }
+    
+    // Clear from profile state
+    setProfile(prev => ({ ...prev, avatar_url: null }))
+    setMessage({ type: 'success', text: 'התמונה הוסרה' })
+  }
+
+  // Handle media upload (images/videos) with compression
   const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
@@ -126,12 +174,25 @@ export default function SettingsPage() {
       const newMediaUrls: string[] = []
 
       for (const file of Array.from(files)) {
-        const fileExt = file.name.split('.').pop()
+        let processedFile = file
+        let fileExt = file.name.split('.').pop()
+
+        // Compress images to WebP, keep videos as-is
+        if (isImageFile(file)) {
+          console.log(`Compressing media: ${file.name} (${formatFileSize(file.size)})`)
+          processedFile = await compressImage(file, {
+            maxWidthOrHeight: 1200,
+            quality: 0.8,
+          })
+          fileExt = 'webp'
+          console.log(`Compressed to: ${formatFileSize(processedFile.size)}`)
+        }
+
         const fileName = `${user.id}/media-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`
 
         const { error: uploadError } = await supabase.storage
           .from('media')
-          .upload(fileName, file)
+          .upload(fileName, processedFile)
 
         if (uploadError) {
           console.error('Upload error:', uploadError)
@@ -150,7 +211,7 @@ export default function SettingsPage() {
         media_urls: [...(prev.media_urls || []), ...newMediaUrls]
       }))
       
-      setMessage({ type: 'success', text: `${newMediaUrls.length} קבצים הועלו בהצלחה` })
+      setMessage({ type: 'success', text: `${newMediaUrls.length} קבצים הועלו בהצלחה (WebP)` })
     } catch (error) {
       console.error('Media upload error:', error)
       setMessage({ type: 'error', text: 'שגיאה בהעלאת הקבצים' })
@@ -159,8 +220,26 @@ export default function SettingsPage() {
     }
   }
 
-  // Remove media item
-  const removeMedia = (index: number) => {
+  // Remove media item (also deletes from storage)
+  const removeMedia = async (index: number) => {
+    const mediaUrl = profile.media_urls?.[index]
+    
+    // Delete from Supabase storage
+    if (mediaUrl) {
+      try {
+        const urlParts = mediaUrl.split('/media/')
+        if (urlParts[1]) {
+          const filePath = decodeURIComponent(urlParts[1])
+          await supabase.storage.from('media').remove([filePath])
+          console.log('Media deleted from storage:', filePath)
+        }
+      } catch (deleteError) {
+        console.warn('Could not delete media from storage:', deleteError)
+        // Continue with removal from profile even if storage delete fails
+      }
+    }
+    
+    // Remove from profile state
     setProfile(prev => ({
       ...prev,
       media_urls: prev.media_urls?.filter((_, i) => i !== index) || []
@@ -297,7 +376,7 @@ export default function SettingsPage() {
                       variant="ghost" 
                       size="sm" 
                       className="text-destructive"
-                      onClick={() => setProfile(prev => ({ ...prev, avatar_url: null }))}
+                      onClick={removeAvatar}
                     >
                       <Trash2 className="ml-2 h-4 w-4" />
                       הסר תמונה
