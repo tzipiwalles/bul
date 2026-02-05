@@ -28,6 +28,7 @@ export interface Database {
           is_active: boolean
           opening_hours: OpeningHours | null
           categories: string[]
+          community: string | null
         }
         Insert: {
           id: string
@@ -51,6 +52,7 @@ export interface Database {
           is_active?: boolean
           opening_hours?: OpeningHours | null
           categories?: string[]
+          community?: string | null
         }
         Update: {
           id?: string
@@ -74,6 +76,7 @@ export interface Database {
           is_active?: boolean
           opening_hours?: OpeningHours | null
           categories?: string[]
+          community?: string | null
         }
       }
       reviews: {
@@ -226,3 +229,31 @@ export type Review = Database['public']['Tables']['reviews']['Row']
 export type Category = Database['public']['Tables']['categories']['Row']
 export type Appointment = Database['public']['Tables']['appointments']['Row']
 export type Lead = Database['public']['Tables']['leads']['Row']
+
+// User features types
+export interface Favorite {
+  id: string
+  user_id: string
+  profile_id: string
+  created_at: string
+}
+
+export interface UserNote {
+  id: string
+  user_id: string
+  profile_id: string
+  note: string
+  created_at: string
+  updated_at: string
+}
+
+export type ActivityType = 'view' | 'call' | 'whatsapp' | 'appointment_request' | 'lead_sent'
+
+export interface UserActivity {
+  id: string
+  user_id: string
+  profile_id: string
+  activity_type: ActivityType
+  metadata: Record<string, unknown>
+  created_at: string
+}

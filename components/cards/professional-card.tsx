@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Star, MapPin, CheckCircle2, Play } from 'lucide-react'
+import { Star, MapPin, CheckCircle2, Play, Calendar, Wrench, AlertTriangle, Store } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 export interface Professional {
@@ -15,6 +15,15 @@ export interface Professional {
   imageUrl?: string
   avatarUrl?: string | null
   hasVideo?: boolean
+  serviceType?: 'appointment' | 'project' | 'emergency' | 'retail'
+}
+
+// Service type badge config
+const SERVICE_BADGE_CONFIG = {
+  appointment: { label: 'קביעת תור', icon: Calendar, className: 'bg-blue-50 text-blue-700 border-blue-200' },
+  project: { label: 'פרויקטים', icon: Wrench, className: 'bg-green-50 text-green-700 border-green-200' },
+  emergency: { label: 'חירום 24/6', icon: AlertTriangle, className: 'bg-red-50 text-red-700 border-red-200' },
+  retail: { label: 'חנות', icon: Store, className: 'bg-purple-50 text-purple-700 border-purple-200' },
 }
 
 interface ProfessionalCardProps {
@@ -70,13 +79,23 @@ export function ProfessionalCard({ pro }: ProfessionalCardProps) {
 
             {/* Tags */}
             <div className="flex flex-wrap gap-2 mb-4">
+              {/* Service Type Badge */}
+              {pro.serviceType && SERVICE_BADGE_CONFIG[pro.serviceType] && (
+                <Badge variant="outline" className={`font-normal border ${SERVICE_BADGE_CONFIG[pro.serviceType].className}`}>
+                  {(() => {
+                    const Icon = SERVICE_BADGE_CONFIG[pro.serviceType!].icon
+                    return <Icon className="h-3 w-3 ml-1" />
+                  })()}
+                  {SERVICE_BADGE_CONFIG[pro.serviceType].label}
+                </Badge>
+              )}
               {pro.hasVideo && (
                 <Badge variant="secondary" className="font-normal bg-secondary/10 text-secondary border border-secondary/20">
                   <Play className="h-3 w-3 ml-1" />
                   סרטון
                 </Badge>
               )}
-              {pro.tags.map((tag, i) => (
+              {pro.tags.filter(tag => tag !== '24/6' || pro.serviceType !== 'emergency').map((tag, i) => (
                 <Badge key={i} variant="secondary" className="font-normal bg-gray-50 text-gray-600 hover:bg-gray-100">
                   {tag}
                 </Badge>

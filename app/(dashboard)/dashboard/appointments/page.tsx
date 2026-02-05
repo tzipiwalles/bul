@@ -1,41 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowRight, Calendar, Clock, Phone, CheckCircle, XCircle, MoreVertical } from 'lucide-react'
+import { ArrowRight, Calendar, Clock, Phone, CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { createClient } from '@/lib/supabase/client'
 
-const MOCK_APPOINTMENTS = [
-  {
-    id: 1,
-    clientName: 'יוסי כהן',
-    clientPhone: '050-1234567',
-    date: '2026-02-05',
-    time: '10:00',
-    status: 'pending',
-    notes: 'תור ראשון'
-  },
-  {
-    id: 2,
-    clientName: 'משה לוי',
-    clientPhone: '052-9876543',
-    date: '2026-02-05',
-    time: '14:00',
-    status: 'confirmed',
-    notes: ''
-  },
-  {
-    id: 3,
-    clientName: 'דוד אברהם',
-    clientPhone: '054-5555555',
-    date: '2026-02-06',
-    time: '09:30',
-    status: 'pending',
-    notes: 'ביקש תור מוקדם'
-  },
-]
+interface Appointment {
+  id: string
+  customer_name: string
+  customer_phone: string
+  requested_date: string
+  requested_time: string
+  status: string
+  notes: string | null
+}
 
 const statusLabels: Record<string, { label: string; color: string }> = {
   pending: { label: 'ממתין לאישור', color: 'bg-yellow-100 text-yellow-800' },
@@ -45,17 +26,69 @@ const statusLabels: Record<string, { label: string; color: string }> = {
 }
 
 export default function AppointmentsPage() {
-  const [appointments, setAppointments] = useState(MOCK_APPOINTMENTS)
+  const supabase = createClient()
+  const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const handleConfirm = (id: number) => {
-    setAppointments(prev => 
-      prev.map(apt => apt.id === id ? { ...apt, status: 'confirmed' } : apt)
-    )
+  useEffect(() => {
+    async function fetchAppointments() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        const { data, error } = await supabase
+          .from('appointments')
+          .select('*')
+          .eq('profile_id', user.id)
+          .order('requested_date', { ascending: true })
+          .order('requested_time', { ascending: true })
+
+        if (error) {
+          console.error('Error fetching appointments:', error)
+        } else {
+          setAppointments(data || [])
+        }
+      } catch (err) {
+        console.error('Error:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAppointments()
+  }, [supabase])
+
+  const handleConfirm = async (id: string) => {
+    const { error } = await supabase
+      .from('appointments')
+      .update({ status: 'confirmed' })
+      .eq('id', id)
+
+    if (!error) {
+      setAppointments(prev => 
+        prev.map(apt => apt.id === id ? { ...apt, status: 'confirmed' } : apt)
+      )
+    }
   }
 
-  const handleCancel = (id: number) => {
-    setAppointments(prev => 
-      prev.map(apt => apt.id === id ? { ...apt, status: 'cancelled' } : apt)
+  const handleCancel = async (id: string) => {
+    const { error } = await supabase
+      .from('appointments')
+      .update({ status: 'cancelled' })
+      .eq('id', id)
+
+    if (!error) {
+      setAppointments(prev => 
+        prev.map(apt => apt.id === id ? { ...apt, status: 'cancelled' } : apt)
+      )
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
     )
   }
 
@@ -111,6 +144,7 @@ export default function AppointmentsPage() {
               <div className="text-center py-8 text-gray-500">
                 <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>אין תורים כרגע</p>
+                <p className="text-sm mt-2">כשלקוחות יקבעו תורים, הם יופיעו כאן</p>
               </div>
             ) : (
               appointments.map(apt => (
@@ -120,25 +154,25 @@ export default function AppointmentsPage() {
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <h3 className="font-semibold text-gray-900">{apt.clientName}</h3>
-                      <a href={`tel:${apt.clientPhone}`} className="text-sm text-primary flex items-center gap-1">
+                      <h3 className="font-semibold text-gray-900">{apt.customer_name}</h3>
+                      <a href={`tel:${apt.customer_phone}`} className="text-sm text-primary flex items-center gap-1">
                         <Phone className="h-3 w-3" />
-                        {apt.clientPhone}
+                        {apt.customer_phone}
                       </a>
                     </div>
-                    <Badge className={statusLabels[apt.status].color}>
-                      {statusLabels[apt.status].label}
+                    <Badge className={statusLabels[apt.status]?.color || 'bg-gray-100 text-gray-800'}>
+                      {statusLabels[apt.status]?.label || apt.status}
                     </Badge>
                   </div>
 
                   <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
-                      {new Date(apt.date).toLocaleDateString('he-IL')}
+                      {new Date(apt.requested_date).toLocaleDateString('he-IL')}
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
-                      {apt.time}
+                      {apt.requested_time}
                     </div>
                   </div>
 

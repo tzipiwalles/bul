@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { Search, SlidersHorizontal, X, ChevronDown } from 'lucide-react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { Search, SlidersHorizontal, X, Calendar, Wrench, AlertTriangle, Store } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ProfessionalCard, Professional } from '@/components/cards/professional-card'
@@ -11,6 +12,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types/database'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CITIES, CATEGORIES } from '@/lib/constants'
+import { COMMUNITIES } from '@/lib/communities'
 import {
   Sheet,
   SheetContent,
@@ -29,6 +31,14 @@ import {
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 
+// Service type definitions
+const SERVICE_TYPE_CONFIG = {
+  appointment: { name: 'קביעת תור', icon: Calendar, color: 'bg-blue-500', badgeColor: 'bg-blue-50 text-blue-700 border-blue-200' },
+  project: { name: 'פרויקטים', icon: Wrench, color: 'bg-green-500', badgeColor: 'bg-green-50 text-green-700 border-green-200' },
+  emergency: { name: 'חירום 24/6', icon: AlertTriangle, color: 'bg-red-500', badgeColor: 'bg-red-50 text-red-700 border-red-200' },
+  retail: { name: 'חנות', icon: Store, color: 'bg-purple-500', badgeColor: 'bg-purple-50 text-purple-700 border-purple-200' },
+}
+
 // Convert database profile to display format
 function profileToProfessional(profile: Profile & { media_urls?: string[] }): Professional {
   const hasVideo = profile.media_urls && profile.media_urls.length > 0
@@ -42,11 +52,11 @@ function profileToProfessional(profile: Profile & { media_urls?: string[] }): Pr
     description: profile.description || '',
     isVerified: profile.is_verified,
     tags: [
-      profile.service_type === 'emergency' ? '24/6' : null,
       profile.is_verified ? 'מאומת' : null,
     ].filter(Boolean) as string[],
     avatarUrl: profile.avatar_url,
     hasVideo,
+    serviceType: profile.service_type as Professional['serviceType'],
   }
 }
 
@@ -66,12 +76,22 @@ function ProfileCardSkeleton() {
 }
 
 export default function SearchPage() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  
+  // Initialize from URL params
+  const initialServiceType = searchParams.get('serviceType')
+  const initialCategory = searchParams.get('category')
+  const initialCity = searchParams.get('city')
+  const initialQuery = searchParams.get('q')
+  
   const [professionals, setProfessionals] = useState<Professional[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCity, setSelectedCity] = useState<string | null>(null)
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [selectedServiceType, setSelectedServiceType] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState(initialQuery || '')
+  const [selectedCity, setSelectedCity] = useState<string | null>(initialCity)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCategory)
+  const [selectedServiceType, setSelectedServiceType] = useState<string | null>(initialServiceType)
+  const [selectedCommunity, setSelectedCommunity] = useState<string | null>(null)
   const [onlyVerified, setOnlyVerified] = useState(false)
   const [onlyWithVideo, setOnlyWithVideo] = useState(false)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
@@ -79,7 +99,15 @@ export default function SearchPage() {
   const feedAds = MOCK_ADS.filter(ad => ad.placement === 'feed')
   
   // Count active filters
-  const activeFiltersCount = [selectedCity, selectedCategory, selectedServiceType, onlyVerified, onlyWithVideo].filter(Boolean).length
+  const activeFiltersCount = [selectedCity, selectedCategory, selectedServiceType, selectedCommunity, onlyVerified, onlyWithVideo].filter(Boolean).length
+  
+  // Get page title based on service type
+  const getPageTitle = () => {
+    if (selectedServiceType && SERVICE_TYPE_CONFIG[selectedServiceType as keyof typeof SERVICE_TYPE_CONFIG]) {
+      return SERVICE_TYPE_CONFIG[selectedServiceType as keyof typeof SERVICE_TYPE_CONFIG].name
+    }
+    return 'בעלי מקצוע'
+  }
 
   useEffect(() => {
     async function fetchProfessionals() {
@@ -109,6 +137,11 @@ export default function SearchPage() {
       // Apply service type filter
       if (selectedServiceType) {
         query = query.eq('service_type', selectedServiceType)
+      }
+      
+      // Apply community filter
+      if (selectedCommunity) {
+        query = query.eq('community', selectedCommunity)
       }
       
       // Apply verified filter
@@ -145,12 +178,13 @@ export default function SearchPage() {
     }
     
     fetchProfessionals()
-  }, [searchQuery, selectedCity, selectedCategory, selectedServiceType, onlyVerified, onlyWithVideo])
+  }, [searchQuery, selectedCity, selectedCategory, selectedServiceType, selectedCommunity, onlyVerified, onlyWithVideo])
   
   const clearAllFilters = () => {
     setSelectedCity(null)
     setSelectedCategory(null)
     setSelectedServiceType(null)
+    setSelectedCommunity(null)
     setOnlyVerified(false)
     setOnlyWithVideo(false)
   }
@@ -261,6 +295,22 @@ export default function SearchPage() {
                   </Select>
                 </div>
                 
+                {/* Community Filter */}
+                <div className="space-y-2">
+                  <Label>קהילה / חסידות</Label>
+                  <Select value={selectedCommunity || '__all__'} onValueChange={(v) => setSelectedCommunity(v === '__all__' ? null : v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="כל הקהילות" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      <SelectItem value="__all__">כל הקהילות</SelectItem>
+                      {COMMUNITIES.map(community => (
+                        <SelectItem key={community.id} value={community.id}>{community.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
                 {/* Toggle Filters */}
                 <div className="space-y-3">
                   <Label>אפשרויות נוספות</Label>
@@ -300,12 +350,43 @@ export default function SearchPage() {
           </Sheet>
         </div>
         
-        {/* Quick Filters - Popular Cities */}
+        {/* Quick Filters - Service Types */}
         <div className="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-hide">
           <Button 
             size="sm" 
+            variant={!selectedServiceType ? "secondary" : "outline"}
+            className={`rounded-full px-4 flex-shrink-0 ${!selectedServiceType ? 'bg-primary text-white hover:bg-primary/90 border-0' : 'border-gray-200 text-gray-600'}`}
+            onClick={() => setSelectedServiceType(null)}
+          >
+            הכל
+          </Button>
+          {Object.entries(SERVICE_TYPE_CONFIG).map(([id, config]) => {
+            const Icon = config.icon
+            return (
+              <Button 
+                key={id}
+                size="sm" 
+                variant={selectedServiceType === id ? "secondary" : "outline"}
+                className={`rounded-full px-4 flex-shrink-0 gap-1.5 ${
+                  selectedServiceType === id 
+                    ? `${config.badgeColor} border` 
+                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                }`}
+                onClick={() => setSelectedServiceType(selectedServiceType === id ? null : id)}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {config.name}
+              </Button>
+            )
+          })}
+        </div>
+        
+        {/* Quick Filters - Popular Cities */}
+        <div className="flex gap-2 mt-2 overflow-x-auto pb-2 scrollbar-hide">
+          <Button 
+            size="sm" 
             variant={!selectedCity ? "secondary" : "outline"}
-            className={`rounded-full px-4 flex-shrink-0 ${!selectedCity ? 'bg-primary/10 text-primary hover:bg-primary/20 border-0' : 'border-gray-200 text-gray-600'}`}
+            className={`rounded-full px-3 flex-shrink-0 text-xs ${!selectedCity ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-0' : 'border-gray-200 text-gray-500'}`}
             onClick={() => setSelectedCity(null)}
           >
             כל הארץ
@@ -315,7 +396,7 @@ export default function SearchPage() {
               key={city}
               size="sm" 
               variant={selectedCity === city ? "secondary" : "outline"}
-              className={`rounded-full px-4 flex-shrink-0 ${selectedCity === city ? 'bg-primary/10 text-primary hover:bg-primary/20 border-0' : 'border-gray-200 text-gray-600'}`}
+              className={`rounded-full px-3 flex-shrink-0 text-xs ${selectedCity === city ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-0' : 'border-gray-200 text-gray-500'}`}
               onClick={() => setSelectedCity(city)}
             >
               {city}
@@ -340,6 +421,12 @@ export default function SearchPage() {
                 <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedServiceType(null)} />
               </Badge>
             )}
+            {selectedCommunity && (
+              <Badge variant="secondary" className="gap-1 bg-amber-50 text-amber-700">
+                {COMMUNITIES.find(c => c.id === selectedCommunity)?.label || selectedCommunity}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedCommunity(null)} />
+              </Badge>
+            )}
             {onlyVerified && (
               <Badge variant="secondary" className="gap-1 bg-purple-50 text-purple-700">
                 מאומתים
@@ -360,9 +447,14 @@ export default function SearchPage() {
         {/* Results */}
         <main className="flex-1">
           <div className="mb-4 flex items-center justify-between">
-            <h1 className="text-xl font-bold text-gray-900">
-              בעלי מקצוע
-              <span className="text-sm font-normal text-gray-500 mr-2">
+            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              {selectedServiceType && SERVICE_TYPE_CONFIG[selectedServiceType as keyof typeof SERVICE_TYPE_CONFIG] && (
+                <span className={`inline-flex items-center justify-center w-8 h-8 rounded-lg ${SERVICE_TYPE_CONFIG[selectedServiceType as keyof typeof SERVICE_TYPE_CONFIG].color} text-white`}>
+                  {React.createElement(SERVICE_TYPE_CONFIG[selectedServiceType as keyof typeof SERVICE_TYPE_CONFIG].icon, { className: "h-4 w-4" })}
+                </span>
+              )}
+              {getPageTitle()}
+              <span className="text-sm font-normal text-gray-500">
                 ({loading ? '...' : professionals.length} תוצאות)
               </span>
             </h1>

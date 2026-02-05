@@ -81,19 +81,61 @@ export const CITIES = [
 
 // Categories for the marketplace
 export const CATEGORIES = [
+  // בית ומשפחה
   { id: 'health', name: 'בריאות', icon: '🏥', description: 'רופאים, מטפלים, פיזיותרפיה ועוד' },
   { id: 'beauty', name: 'יופי וטיפוח', icon: '💇', description: 'פייטנים, ספרים, קוסמטיקאים' },
   { id: 'home', name: 'בית ושיפוצים', icon: '🏠', description: 'שיפוצניקים, חשמלאים, שרברבים' },
   { id: 'food', name: 'מזון ומסעדות', icon: '🍕', description: 'מסעדות, קייטרינג, אספקה' },
-  { id: 'education', name: 'חינוך והוראה', icon: '📚', description: 'מורים פרטיים, גננות, שיעורי עזר' },
-  { id: 'legal', name: 'משפטי ופיננסי', icon: '⚖️', description: 'עורכי דין, רואי חשבון, יועצים' },
-  { id: 'events', name: 'אירועים ושמחות', icon: '🎉', description: 'אולמות, צלמים, תזמורות, הסעות' },
-  { id: 'tech', name: 'טכנולוגיה', icon: '💻', description: 'מחשבים, טלפונים, בניית אתרים' },
-  { id: 'transport', name: 'הסעות ותחבורה', icon: '🚗', description: 'נהגים, הסעות, משלוחים' },
   { id: 'cleaning', name: 'ניקיון ותחזוקה', icon: '🧹', description: 'חברות ניקיון, מתקנים' },
-  { id: 'fashion', name: 'אופנה והלבשה', icon: '👔', description: 'חנויות בגדים, תופרים, חייטים' },
-  { id: 'pets', name: 'חיות מחמד', icon: '🐕', description: 'וטרינרים, מספרות, מזון' },
   { id: 'furniture', name: 'ריהוט וציוד', icon: '🛋️', description: 'חנויות רהיטים, נגרים' },
+  { id: 'garden', name: 'גינון ונוף', icon: '🌳', description: 'גננים, עיצוב גינות, תחזוקת גינות' },
+  
+  // חינוך וילדים
+  { id: 'education', name: 'חינוך והוראה', icon: '📚', description: 'מורים פרטיים, גננות, שיעורי עזר' },
+  { id: 'children', name: 'ילדים ונוער', icon: '👶', description: 'הפעלות, צעצועים, חוגים לילדים' },
+  { id: 'tutoring', name: 'שיעורים פרטיים', icon: '✏️', description: 'מורים פרטיים, עזרה בשיעורים' },
+  { id: 'daycare', name: 'מעונות וגנים', icon: '🎈', description: 'גנים, משפחתונים, בייביסיטר' },
+  
+  // אירועים ושמחות
+  { id: 'events', name: 'אירועים ושמחות', icon: '🎉', description: 'אולמות, צלמים, תזמורות' },
   { id: 'photography', name: 'צילום ווידאו', icon: '📸', description: 'צלמים, עורכי וידאו' },
   { id: 'music', name: 'מוזיקה ונגינה', icon: '🎵', description: 'להקות, זמרים, DJ, מורים לנגינה' },
+  { id: 'catering', name: 'קייטרינג', icon: '🍽️', description: 'קייטרינג לאירועים, שף פרטי' },
+  { id: 'flowers', name: 'פרחים ועיצוב', icon: '💐', description: 'חנויות פרחים, עיצוב אירועים' },
+  
+  // מקצועות חופשיים
+  { id: 'legal', name: 'משפטי ופיננסי', icon: '⚖️', description: 'עורכי דין, רואי חשבון, יועצים' },
+  { id: 'insurance', name: 'ביטוח', icon: '🛡️', description: 'סוכני ביטוח, יועצי פנסיה' },
+  { id: 'realestate', name: 'נדל"ן', icon: '🏢', description: 'תיווך דירות, שמאים, יועצי משכנתא' },
+  
+  // טכנולוגיה ותקשורת
+  { id: 'tech', name: 'טכנולוגיה', icon: '💻', description: 'מחשבים, טלפונים, בניית אתרים' },
+  { id: 'printing', name: 'דפוס והדפסה', icon: '🖨️', description: 'דפוס, הזמנות, שלטים, פרסום' },
+  { id: 'media', name: 'תקשורת ופרסום', icon: '📰', description: 'עיתונים, מגזינים, פרסום, יח"צ' },
+  { id: 'graphics', name: 'עיצוב גרפי', icon: '🎨', description: 'מעצבים גרפיים, לוגואים, מיתוג' },
+  
+  // תחבורה ולוגיסטיקה
+  { id: 'transport', name: 'הסעות ותחבורה', icon: '🚗', description: 'נהגים, הסעות, משלוחים' },
+  { id: 'moving', name: 'הובלות', icon: '🚚', description: 'הובלת דירות, אחסון' },
+  { id: 'delivery', name: 'משלוחים', icon: '📦', description: 'שליחויות, משלוחי מזון' },
+  
+  // אופנה וטקסטיל
+  { id: 'fashion', name: 'אופנה והלבשה', icon: '👔', description: 'חנויות בגדים, תופרים, חייטים' },
+  { id: 'wigs', name: 'פאות ושיער', icon: '💇‍♀️', description: 'פאות, תיקון פאות, שיער' },
+  { id: 'jewelry', name: 'תכשיטים', icon: '💎', description: 'חנויות תכשיטים, תיקונים' },
+  
+  // יודאיקה וספרים
+  { id: 'judaica', name: 'יודאיקה', icon: '🕎', description: 'ספרי קודש, תשמישי קדושה, מזוזות' },
+  { id: 'books', name: 'ספרים והוצאה לאור', icon: '📖', description: 'הוצאות ספרים, עיתונים לילדים, כתיבה' },
+  { id: 'scribes', name: 'סת"ם', icon: '📜', description: 'סופרי סת"ם, בדיקת תפילין ומזוזות' },
+  
+  // שירותים נוספים
+  { id: 'pets', name: 'חיות מחמד', icon: '🐕', description: 'וטרינרים, מספרות, מזון' },
+  { id: 'security', name: 'אבטחה', icon: '🔒', description: 'מנעולנים, מצלמות אבטחה, אזעקות' },
+  { id: 'aircon', name: 'מיזוג אוויר', icon: '❄️', description: 'התקנת מזגנים, תיקון, תחזוקה' },
+  { id: 'appliances', name: 'מכשירי חשמל', icon: '🔌', description: 'תיקון מכשירי חשמל, מכירה' },
+  { id: 'travel', name: 'תיירות ונופש', icon: '✈️', description: 'סוכני נסיעות, צימרים, מלונות' },
+  { id: 'sports', name: 'ספורט וכושר', icon: '⚽', description: 'חדרי כושר, מאמנים, ציוד ספורט' },
+  { id: 'therapy', name: 'טיפול רגשי', icon: '🧠', description: 'פסיכולוגים, מטפלים, יועצים' },
+  { id: 'alternative', name: 'רפואה משלימה', icon: '🌿', description: 'טבע, הומאופתיה, דיקור' },
 ]

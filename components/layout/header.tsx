@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Search, UserCircle, Menu } from 'lucide-react'
+import { Search, Menu } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { UserMenu } from './user-menu'
 
 export function Header() {
   return (
@@ -53,16 +54,7 @@ export function Header() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <Link href="/login">
-              <Button variant="ghost" className="hidden text-gray-600 hover:text-primary sm:flex">
-                התחברות
-              </Button>
-            </Link>
-            <Link href="/register">
-              <Button className="bg-primary text-white hover:bg-primary/90 shadow-md shadow-blue-900/10 rounded-full px-6">
-                הצטרפות
-              </Button>
-            </Link>
+            <UserMenu />
             <Button variant="ghost" size="icon" className="md:hidden">
               <Menu className="h-5 w-5" />
             </Button>

@@ -1,41 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowRight, MessageSquare, Phone, Mail, Clock, CheckCircle, Archive } from 'lucide-react'
+import { ArrowRight, MessageSquare, Phone, Mail, Clock, CheckCircle, Archive, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { createClient } from '@/lib/supabase/client'
 
-const MOCK_LEADS = [
-  {
-    id: 1,
-    clientName: 'אברהם ישראלי',
-    clientPhone: '050-1111111',
-    clientEmail: 'avraham@email.com',
-    message: 'שלום, אני מחפש שיפוצניק לדירה של 4 חדרים. האם אפשר לקבל הצעת מחיר?',
-    createdAt: '2026-02-04T10:30:00',
-    status: 'new'
-  },
-  {
-    id: 2,
-    clientName: 'שרה כהן',
-    clientPhone: '052-2222222',
-    clientEmail: '',
-    message: 'מעוניינת בתיקון דלת כניסה. מתי אפשר לתאם?',
-    createdAt: '2026-02-03T15:45:00',
-    status: 'contacted'
-  },
-  {
-    id: 3,
-    clientName: 'יצחק לוי',
-    clientPhone: '054-3333333',
-    clientEmail: 'yitzhak@email.com',
-    message: 'צריך הצעת מחיר לצביעת דירה 3 חדרים + סלון. העיר בני ברק.',
-    createdAt: '2026-02-02T09:00:00',
-    status: 'new'
-  },
-]
+interface Lead {
+  id: string
+  customer_name: string
+  customer_phone: string
+  customer_email: string | null
+  message: string
+  created_at: string
+  status: string
+}
 
 const statusLabels: Record<string, { label: string; color: string }> = {
   new: { label: 'חדש', color: 'bg-blue-100 text-blue-800' },
@@ -45,23 +26,74 @@ const statusLabels: Record<string, { label: string; color: string }> = {
 }
 
 export default function LeadsPage() {
-  const [leads, setLeads] = useState(MOCK_LEADS)
+  const supabase = createClient()
+  const [leads, setLeads] = useState<Lead[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const handleMarkContacted = (id: number) => {
-    setLeads(prev => 
-      prev.map(lead => lead.id === id ? { ...lead, status: 'contacted' } : lead)
-    )
+  useEffect(() => {
+    async function fetchLeads() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        const { data, error } = await supabase
+          .from('leads')
+          .select('*')
+          .eq('profile_id', user.id)
+          .order('created_at', { ascending: false })
+
+        if (error) {
+          console.error('Error fetching leads:', error)
+        } else {
+          setLeads(data || [])
+        }
+      } catch (err) {
+        console.error('Error:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchLeads()
+  }, [supabase])
+
+  const handleMarkContacted = async (id: string) => {
+    const { error } = await supabase
+      .from('leads')
+      .update({ status: 'contacted' })
+      .eq('id', id)
+
+    if (!error) {
+      setLeads(prev => 
+        prev.map(lead => lead.id === id ? { ...lead, status: 'contacted' } : lead)
+      )
+    }
   }
 
-  const handleArchive = (id: number) => {
-    setLeads(prev => 
-      prev.map(lead => lead.id === id ? { ...lead, status: 'archived' } : lead)
-    )
+  const handleArchive = async (id: string) => {
+    const { error } = await supabase
+      .from('leads')
+      .update({ status: 'archived' })
+      .eq('id', id)
+
+    if (!error) {
+      setLeads(prev => 
+        prev.map(lead => lead.id === id ? { ...lead, status: 'archived' } : lead)
+      )
+    }
   }
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString('he-IL') + ' ' + date.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
   }
 
   return (
@@ -108,6 +140,7 @@ export default function LeadsPage() {
               <div className="text-center py-8 text-gray-500">
                 <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>אין פניות כרגע</p>
+                <p className="text-sm mt-2">כשלקוחות ישלחו פניות, הן יופיעו כאן</p>
               </div>
             ) : (
               leads.map(lead => (
@@ -121,22 +154,22 @@ export default function LeadsPage() {
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <h3 className="font-semibold text-gray-900">{lead.clientName}</h3>
+                      <h3 className="font-semibold text-gray-900">{lead.customer_name}</h3>
                       <div className="flex flex-wrap gap-2 mt-1">
-                        <a href={`tel:${lead.clientPhone}`} className="text-sm text-primary flex items-center gap-1">
+                        <a href={`tel:${lead.customer_phone}`} className="text-sm text-primary flex items-center gap-1">
                           <Phone className="h-3 w-3" />
-                          {lead.clientPhone}
+                          {lead.customer_phone}
                         </a>
-                        {lead.clientEmail && (
-                          <a href={`mailto:${lead.clientEmail}`} className="text-sm text-primary flex items-center gap-1">
+                        {lead.customer_email && (
+                          <a href={`mailto:${lead.customer_email}`} className="text-sm text-primary flex items-center gap-1">
                             <Mail className="h-3 w-3" />
-                            {lead.clientEmail}
+                            {lead.customer_email}
                           </a>
                         )}
                       </div>
                     </div>
-                    <Badge className={statusLabels[lead.status].color}>
-                      {statusLabels[lead.status].label}
+                    <Badge className={statusLabels[lead.status]?.color || 'bg-gray-100 text-gray-800'}>
+                      {statusLabels[lead.status]?.label || lead.status}
                     </Badge>
                   </div>
 
@@ -147,7 +180,7 @@ export default function LeadsPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1 text-xs text-gray-500">
                       <Clock className="h-3 w-3" />
-                      {formatDate(lead.createdAt)}
+                      {formatDate(lead.created_at)}
                     </div>
 
                     {lead.status === 'new' && (
