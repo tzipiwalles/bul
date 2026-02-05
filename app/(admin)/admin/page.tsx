@@ -389,7 +389,7 @@ export default function AdminPage() {
                       <div className="text-sm">
                         ⭐ {profile.rating?.toFixed(1) || '0.0'}
                         <span className="text-xs text-gray-500 mr-1">
-                          ({profile.reviews_count || 0})
+                          ({profile.review_count || 0})
                         </span>
                       </div>
                     </td>

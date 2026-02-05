@@ -54,7 +54,8 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
   const openingHours = profile.opening_hours as OpeningHours | null
 
   // Get all media items (images and videos)
-  const galleryImages = profile.gallery_urls || []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const galleryImages = (profile as any).gallery_urls || []
   const videos = profile.media_urls || []
   const allMedia = [...galleryImages]
   

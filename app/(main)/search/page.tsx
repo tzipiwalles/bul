@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, SlidersHorizontal, X, Calendar, Wrench, AlertTriangle, Store, Play } from 'lucide-react'
@@ -116,7 +116,7 @@ function VideoViewer({ pro, onClose }: { pro: Professional | null; onClose: () =
   )
 }
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   
@@ -633,5 +633,25 @@ export default function SearchPage() {
         )}
       </AnimatePresence>
     </div>
+  )
+}
+
+// Wrapper with Suspense for useSearchParams
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen p-4">
+        <div className="animate-pulse space-y-4">
+          <div className="h-12 bg-gray-200 rounded-xl" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-80 bg-gray-200 rounded-2xl" />
+            ))}
+          </div>
+        </div>
+      </div>
+    }>
+      <SearchContent />
+    </Suspense>
   )
 }

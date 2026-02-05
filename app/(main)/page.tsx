@@ -116,17 +116,21 @@ export default function HomePage() {
     // Fetch profiles with videos for stories
     async function fetchStoryProfiles() {
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('profiles')
           .select('id, business_name, avatar_url, media_urls, categories, created_at')
           .eq('is_active', true)
-          .not('media_urls', 'is', null)
           .order('created_at', { ascending: false })
-          .limit(20)
+          .limit(50)
+
+        if (error) {
+          console.error('Error fetching story profiles:', error)
+        }
 
         if (data) {
+          // Filter for profiles that actually have media content
           const stories: StoryProfile[] = data
-            .filter(p => p.media_urls && p.media_urls.length > 0)
+            .filter(p => p.media_urls && Array.isArray(p.media_urls) && p.media_urls.length > 0)
             .map(p => ({
               id: p.id,
               name: p.business_name,
@@ -136,8 +140,11 @@ export default function HomePage() {
               category: p.categories?.[0] || 'עסק',
               isNew: new Date(p.created_at).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000
             }))
+          console.log('Story profiles found:', stories.length)
           setStoryProfiles(stories)
         }
+      } catch (err) {
+        console.error('Failed to fetch story profiles:', err)
       } finally {
         setIsLoadingStories(false)
       }
@@ -306,17 +313,19 @@ export default function HomePage() {
       </section>
 
       {/* Stories Bar - Live Updates */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-      >
-        {isLoadingStories ? (
-          <StoriesBarSkeleton />
-        ) : storyProfiles.length > 0 ? (
-          <StoriesBar profiles={storyProfiles} />
-        ) : null}
-      </motion.div>
+      {(isLoadingStories || storyProfiles.length > 0) && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          {isLoadingStories ? (
+            <StoriesBarSkeleton />
+          ) : (
+            <StoriesBar profiles={storyProfiles} />
+          )}
+        </motion.div>
+      )}
 
       {/* Service Types - Visual Cards */}
       <section>

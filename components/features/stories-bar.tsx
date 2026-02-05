@@ -1,7 +1,6 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import Image from 'next/image'
 import { motion, AnimatePresence, useAnimationControls } from 'framer-motion'
 import { Play, X, Volume2, VolumeX } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -113,14 +112,13 @@ export function StoriesBar({ profiles, className }: StoriesBarProps) {
                 )}>
                   <div className="w-full h-full rounded-full bg-white p-[2px] overflow-hidden">
                     {/* Fixed aspect-square container for image */}
-                    <div className="relative w-full h-full aspect-square rounded-full overflow-hidden">
+                    <div className="w-full h-full aspect-square rounded-full overflow-hidden">
                       {profile.avatarUrl ? (
-                        <Image
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
                           src={profile.avatarUrl}
                           alt={profile.name}
-                          fill
-                          className="object-cover"
-                          sizes="64px"
+                          className="w-full h-full object-cover"
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center">
@@ -285,14 +283,13 @@ function StoryViewer({ profile, profiles, onClose, onNext }: StoryViewerProps) {
 
       {/* Profile Info */}
       <div className="absolute top-12 right-4 z-20 flex items-center gap-3">
-        <div className="relative w-10 h-10 aspect-square rounded-full overflow-hidden border-2 border-white">
+        <div className="w-10 h-10 aspect-square rounded-full overflow-hidden border-2 border-white">
           {profile.avatarUrl ? (
-            <Image
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
               src={profile.avatarUrl}
               alt={profile.name}
-              fill
-              className="object-cover"
-              sizes="40px"
+              className="w-full h-full object-cover"
             />
           ) : (
             <div className="w-full h-full bg-primary flex items-center justify-center">

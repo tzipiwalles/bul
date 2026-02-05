@@ -74,7 +74,7 @@ export default function HistoryPage() {
       if (!error && data) {
         setActivities(data.map(d => ({
           ...d,
-          profile: d.profiles as ActivityItem['profile']
+          profile: Array.isArray(d.profiles) ? d.profiles[0] : d.profiles
         })))
       }
       

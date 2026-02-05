@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { motion, AnimatePresence, PanInfo } from 'framer-motion'
 import { 
   Star, 
@@ -238,19 +237,13 @@ export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProC
                     onDragEnd={handleDragEnd}
                     className="absolute inset-0"
                   >
-                    {isInView || priority ? (
-                      <Image
-                        src={images[currentImageIndex]}
-                        alt={pro.name}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        priority={priority && index < 3}
-                        loading={priority ? 'eager' : 'lazy'}
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-200 animate-pulse" />
-                    )}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={images[currentImageIndex]}
+                      alt={pro.name}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
                   </motion.div>
                 </AnimatePresence>
 
@@ -322,32 +315,29 @@ export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProC
 
           {/* Content */}
           <div className="p-4 relative">
-            {/* Profile Avatar with Story Ring - FIXED: aspect-square container */}
-            <div className="absolute -top-8 right-4">
+            {/* Profile Avatar with Story Ring - z-20 to appear above carousel */}
+            <div className="absolute -top-8 right-4 z-20">
               <div 
                 className={cn(
-                  "w-14 h-14 rounded-full p-[2.5px]",
+                  "w-14 h-14 rounded-full p-[2.5px] relative",
                   pro.hasVideo ? "story-ring story-ring-glow cursor-pointer" : "bg-white shadow-md"
                 )}
                 onClick={pro.hasVideo ? handleStoryClick : undefined}
               >
                 {/* Fixed aspect ratio inner container */}
-                <div className="w-full h-full rounded-full overflow-hidden bg-white">
-                  <div className="relative w-full h-full aspect-square">
-                    {pro.avatarUrl ? (
-                      <Image
-                        src={pro.avatarUrl}
-                        alt={pro.name}
-                        fill
-                        className="object-cover rounded-full"
-                        sizes="56px"
-                      />
-                    ) : (
-                      <div className="w-full h-full rounded-full bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center">
-                        <span className="text-lg font-bold text-primary">{pro.name[0]}</span>
-                      </div>
-                    )}
-                  </div>
+                <div className="w-full h-full rounded-full overflow-hidden bg-white aspect-square">
+                  {pro.avatarUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={pro.avatarUrl}
+                      alt={pro.name}
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    <div className="w-full h-full rounded-full bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center">
+                      <span className="text-lg font-bold text-primary">{pro.name[0]}</span>
+                    </div>
+                  )}
                 </div>
                 {/* Play icon for video */}
                 {pro.hasVideo && (
@@ -358,7 +348,7 @@ export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProC
               </div>
               {/* Verified badge */}
               {pro.isVerified && (
-                <div className="absolute -bottom-1 left-0 bg-white rounded-full p-0.5 shadow-sm">
+                <div className="absolute -bottom-1 left-0 bg-white rounded-full p-0.5 shadow-sm z-10">
                   <CheckCircle2 className="h-4 w-4 text-blue-500 fill-blue-50" />
                 </div>
               )}
