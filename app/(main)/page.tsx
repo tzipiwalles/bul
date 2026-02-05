@@ -29,8 +29,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { CATEGORIES, CITIES } from '@/lib/constants'
-import { StoriesBar } from '@/components/features/stories-bar'
+import { StoriesBar, StoriesBarSkeleton } from '@/components/features/stories-bar'
 import { createClient } from '@/lib/supabase/client'
+import { AnimatePresence } from 'framer-motion'
 
 // Service type definitions with visual styling
 const SERVICE_TYPES = [
@@ -107,33 +108,38 @@ export default function HomePage() {
   const [storyProfiles, setStoryProfiles] = useState<StoryProfile[]>([])
   const [stats, setStats] = useState({ professionals: 0, categories: 40, cities: 50 })
   const [isFocused, setIsFocused] = useState(false)
+  const [isLoadingStories, setIsLoadingStories] = useState(true)
 
   useEffect(() => {
     const supabase = createClient()
     
     // Fetch profiles with videos for stories
     async function fetchStoryProfiles() {
-      const { data } = await supabase
-        .from('profiles')
-        .select('id, business_name, avatar_url, media_urls, categories, created_at')
-        .eq('is_active', true)
-        .not('media_urls', 'is', null)
-        .order('created_at', { ascending: false })
-        .limit(20)
+      try {
+        const { data } = await supabase
+          .from('profiles')
+          .select('id, business_name, avatar_url, media_urls, categories, created_at')
+          .eq('is_active', true)
+          .not('media_urls', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(20)
 
-      if (data) {
-        const stories: StoryProfile[] = data
-          .filter(p => p.media_urls && p.media_urls.length > 0)
-          .map(p => ({
-            id: p.id,
-            name: p.business_name,
-            avatarUrl: p.avatar_url,
-            hasVideo: true,
-            videoUrl: p.media_urls?.[0],
-            category: p.categories?.[0] || 'עסק',
-            isNew: new Date(p.created_at).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000
-          }))
-        setStoryProfiles(stories)
+        if (data) {
+          const stories: StoryProfile[] = data
+            .filter(p => p.media_urls && p.media_urls.length > 0)
+            .map(p => ({
+              id: p.id,
+              name: p.business_name,
+              avatarUrl: p.avatar_url,
+              hasVideo: true,
+              videoUrl: p.media_urls?.[0],
+              category: p.categories?.[0] || 'עסק',
+              isNew: new Date(p.created_at).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000
+            }))
+          setStoryProfiles(stories)
+        }
+      } finally {
+        setIsLoadingStories(false)
       }
     }
 
@@ -167,7 +173,19 @@ export default function HomePage() {
   }
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-10 relative">
+      {/* Search Focus Overlay */}
+      <AnimatePresence>
+        {isFocused && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm"
+            onClick={() => setIsFocused(false)}
+          />
+        )}
+      </AnimatePresence>
       {/* Hero Section - Premium Glassmorphism */}
       <section className="relative overflow-hidden rounded-3xl min-h-[400px] md:min-h-[480px]">
         {/* Background Image */}
@@ -217,7 +235,7 @@ export default function HomePage() {
             {/* Glassmorphism Search Bar */}
             <motion.div 
               className={`glass p-2 rounded-2xl shadow-2xl transition-all duration-300 ${
-                isFocused ? 'ring-2 ring-secondary/50 shadow-glow-secondary' : ''
+                isFocused ? 'ring-2 ring-secondary shadow-glow-secondary relative z-50 scale-[1.02]' : ''
               }`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -288,15 +306,17 @@ export default function HomePage() {
       </section>
 
       {/* Stories Bar - Live Updates */}
-      {storyProfiles.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        {isLoadingStories ? (
+          <StoriesBarSkeleton />
+        ) : storyProfiles.length > 0 ? (
           <StoriesBar profiles={storyProfiles} />
-        </motion.div>
-      )}
+        ) : null}
+      </motion.div>
 
       {/* Service Types - Visual Cards */}
       <section>

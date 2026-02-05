@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Search, SlidersHorizontal, X, Calendar, Wrench, AlertTriangle, Store, Play } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ProCard, Professional } from '@/components/cards/pro-card'
+import { ProCard, Professional, ProCardSkeleton } from '@/components/cards/pro-card'
 import { SponsoredCard } from '@/components/ads/sponsored-card'
 import { MOCK_ADS } from '@/lib/ads-data'
 import { createClient } from '@/lib/supabase/client'
@@ -63,27 +63,7 @@ function profileToProfessional(profile: Profile & { media_urls?: string[], galle
   }
 }
 
-function ProfileCardSkeleton() {
-  return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
-      <Skeleton className="aspect-[3/2] w-full" />
-      <div className="p-4 pt-8 space-y-3">
-        <div className="flex justify-between items-start">
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-5 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-          </div>
-          <Skeleton className="h-5 w-16" />
-        </div>
-        <div className="flex gap-2">
-          <Skeleton className="h-6 w-20 rounded-full" />
-          <Skeleton className="h-6 w-24 rounded-full" />
-        </div>
-        <Skeleton className="h-10 w-full" />
-      </div>
-    </div>
-  )
-}
+// Using ProCardSkeleton from pro-card.tsx
 
 // Video Viewer Modal
 function VideoViewer({ pro, onClose }: { pro: Professional | null; onClose: () => void }) {
@@ -286,7 +266,7 @@ export default function SearchPage() {
   return (
     <div className="flex flex-col gap-6">
       {/* Mobile Search Header */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 sticky top-20 z-10 md:static md:top-0">
+      <div className="glass p-4 rounded-2xl shadow-sm border border-white/50 sticky top-20 z-10 md:static md:top-0">
         <div className="flex gap-2">
           <div className="flex-1 relative">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -615,12 +595,12 @@ export default function SearchPage() {
             {loading ? (
               // Loading skeletons
               <>
-                <ProfileCardSkeleton />
-                <ProfileCardSkeleton />
-                <ProfileCardSkeleton />
-                <ProfileCardSkeleton />
-                <ProfileCardSkeleton />
-                <ProfileCardSkeleton />
+                <ProCardSkeleton />
+                <ProCardSkeleton />
+                <ProCardSkeleton />
+                <ProCardSkeleton />
+                <ProCardSkeleton />
+                <ProCardSkeleton />
               </>
             ) : professionals.length > 0 ? (
               renderResultsWithAds()

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion, AnimatePresence, PanInfo } from 'framer-motion'
 import { 
   Star, 
@@ -15,7 +16,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Users,
-  Clock
+  Clock,
+  Volume2,
+  VolumeX
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -33,6 +36,7 @@ export interface Professional {
   imageUrl?: string
   avatarUrl?: string | null
   hasVideo?: boolean
+  videoUrl?: string
   serviceType?: 'appointment' | 'project' | 'emergency' | 'retail'
   gender?: 'male' | 'female'
   yearsExperience?: number
@@ -53,11 +57,16 @@ interface ProCardProps {
   pro: Professional
   index?: number
   onVideoClick?: (pro: Professional) => void
+  priority?: boolean
 }
 
-export function ProCard({ pro, index = 0, onVideoClick }: ProCardProps) {
+export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [direction, setDirection] = useState(0)
+  const [isInView, setIsInView] = useState(false)
+  const [isMuted, setIsMuted] = useState(true)
+  const cardRef = useRef<HTMLDivElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
   
   // Build image array - for females (modesty rules), only show work samples/logos
   const images = pro.galleryImages?.length 
@@ -69,6 +78,30 @@ export function ProCard({ pro, index = 0, onVideoClick }: ProCardProps) {
         : []
 
   const showCarousel = images.length > 1
+  const hasVideoPreview = pro.hasVideo && pro.videoUrl
+
+  // Intersection Observer for lazy loading and video autoplay
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting)
+        
+        // Auto-play video when in view
+        if (entry.isIntersecting && videoRef.current) {
+          videoRef.current.play().catch(() => {})
+        } else if (!entry.isIntersecting && videoRef.current) {
+          videoRef.current.pause()
+        }
+      },
+      { threshold: 0.3, rootMargin: '100px' }
+    )
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [])
 
   const handleDragEnd = useCallback((_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     const threshold = 50
@@ -107,6 +140,15 @@ export function ProCard({ pro, index = 0, onVideoClick }: ProCardProps) {
     }
   }
 
+  const toggleMute = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsMuted(!isMuted)
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted
+    }
+  }
+
   const ServiceIcon = pro.serviceType ? SERVICE_CONFIG[pro.serviceType]?.icon : null
 
   const slideVariants = {
@@ -128,16 +170,17 @@ export function ProCard({ pro, index = 0, onVideoClick }: ProCardProps) {
 
   return (
     <motion.div
+      ref={cardRef}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.05 }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
     >
       <Link href={`/profile/${pro.id}`} className="block group">
         <div 
           className={cn(
             "bg-white rounded-2xl overflow-hidden transition-all duration-300",
-            "shadow-sm hover:shadow-premium",
-            "transform hover:-translate-y-1",
+            "shadow-sm group-hover:shadow-xl group-hover:shadow-primary/10",
             pro.isSponsored && "ring-2 ring-yellow-400/50 relative"
           )}
         >
@@ -150,9 +193,32 @@ export function ProCard({ pro, index = 0, onVideoClick }: ProCardProps) {
             </div>
           )}
 
-          {/* Image Carousel - 3:2 Aspect Ratio */}
+          {/* Image/Video Carousel - 3:2 Aspect Ratio */}
           <div className="relative aspect-[3/2] overflow-hidden bg-gray-100">
-            {images.length > 0 ? (
+            {/* Video Preview (if available) */}
+            {hasVideoPreview && isInView ? (
+              <div className="absolute inset-0 z-[5]">
+                <video
+                  ref={videoRef}
+                  src={pro.videoUrl}
+                  muted={isMuted}
+                  loop
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+                {/* Mute/Unmute Toggle */}
+                <button
+                  onClick={toggleMute}
+                  className="absolute bottom-3 left-3 z-10 w-8 h-8 rounded-full glass flex items-center justify-center transition-transform hover:scale-110"
+                >
+                  {isMuted ? (
+                    <VolumeX className="h-4 w-4 text-gray-700" />
+                  ) : (
+                    <Volume2 className="h-4 w-4 text-gray-700" />
+                  )}
+                </button>
+              </div>
+            ) : images.length > 0 ? (
               <>
                 <AnimatePresence initial={false} custom={direction}>
                   <motion.div
@@ -172,13 +238,19 @@ export function ProCard({ pro, index = 0, onVideoClick }: ProCardProps) {
                     onDragEnd={handleDragEnd}
                     className="absolute inset-0"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={images[currentImageIndex]}
-                      alt={pro.name}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
+                    {isInView || priority ? (
+                      <Image
+                        src={images[currentImageIndex]}
+                        alt={pro.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        priority={priority && index < 3}
+                        loading={priority ? 'eager' : 'lazy'}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-200 animate-pulse" />
+                    )}
                   </motion.div>
                 </AnimatePresence>
 
@@ -190,7 +262,7 @@ export function ProCard({ pro, index = 0, onVideoClick }: ProCardProps) {
                       className={cn(
                         "absolute left-2 top-1/2 -translate-y-1/2 z-10",
                         "w-8 h-8 rounded-full glass flex items-center justify-center",
-                        "opacity-0 group-hover:opacity-100 transition-opacity",
+                        "opacity-0 group-hover:opacity-100 transition-all hover:scale-110",
                         currentImageIndex === 0 && "hidden"
                       )}
                     >
@@ -201,7 +273,7 @@ export function ProCard({ pro, index = 0, onVideoClick }: ProCardProps) {
                       className={cn(
                         "absolute right-2 top-1/2 -translate-y-1/2 z-10",
                         "w-8 h-8 rounded-full glass flex items-center justify-center",
-                        "opacity-0 group-hover:opacity-100 transition-opacity",
+                        "opacity-0 group-hover:opacity-100 transition-all hover:scale-110",
                         currentImageIndex === images.length - 1 && "hidden"
                       )}
                     >
@@ -232,7 +304,7 @@ export function ProCard({ pro, index = 0, onVideoClick }: ProCardProps) {
             )}
 
             {/* Gradient Overlay */}
-            <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+            <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/40 to-transparent pointer-events-none z-[6]" />
 
             {/* Service Type Badge */}
             {pro.serviceType && SERVICE_CONFIG[pro.serviceType] && (
@@ -250,28 +322,32 @@ export function ProCard({ pro, index = 0, onVideoClick }: ProCardProps) {
 
           {/* Content */}
           <div className="p-4 relative">
-            {/* Profile Avatar with Story Ring */}
+            {/* Profile Avatar with Story Ring - FIXED: aspect-square container */}
             <div className="absolute -top-8 right-4">
               <div 
                 className={cn(
                   "w-14 h-14 rounded-full p-[2.5px]",
-                  pro.hasVideo ? "story-ring story-ring-glow cursor-pointer" : "bg-white"
+                  pro.hasVideo ? "story-ring story-ring-glow cursor-pointer" : "bg-white shadow-md"
                 )}
                 onClick={pro.hasVideo ? handleStoryClick : undefined}
               >
-                <div className="w-full h-full rounded-full overflow-hidden bg-white p-[2px]">
-                  {pro.avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={pro.avatarUrl}
-                      alt={pro.name}
-                      className="w-full h-full object-cover rounded-full"
-                    />
-                  ) : (
-                    <div className="w-full h-full rounded-full bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center">
-                      <span className="text-lg font-bold text-primary">{pro.name[0]}</span>
-                    </div>
-                  )}
+                {/* Fixed aspect ratio inner container */}
+                <div className="w-full h-full rounded-full overflow-hidden bg-white">
+                  <div className="relative w-full h-full aspect-square">
+                    {pro.avatarUrl ? (
+                      <Image
+                        src={pro.avatarUrl}
+                        alt={pro.name}
+                        fill
+                        className="object-cover rounded-full"
+                        sizes="56px"
+                      />
+                    ) : (
+                      <div className="w-full h-full rounded-full bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center">
+                        <span className="text-lg font-bold text-primary">{pro.name[0]}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 {/* Play icon for video */}
                 {pro.hasVideo && (
@@ -339,7 +415,48 @@ export function ProCard({ pro, index = 0, onVideoClick }: ProCardProps) {
   )
 }
 
-// Sponsored Card Variant - appears every 5th item
+// Skeleton loader for ProCard
+export function ProCardSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
+      {/* Image Skeleton */}
+      <div className="relative aspect-[3/2] bg-gray-200 overflow-hidden">
+        <div className="absolute inset-0 animate-shimmer bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+      </div>
+      
+      {/* Content Skeleton */}
+      <div className="p-4 relative">
+        {/* Avatar Skeleton */}
+        <div className="absolute -top-8 right-4">
+          <div className="w-14 h-14 rounded-full bg-gray-200 animate-pulse" />
+        </div>
+        
+        {/* Text Skeletons */}
+        <div className="pt-5 space-y-3">
+          <div className="flex justify-between">
+            <div className="space-y-2 flex-1">
+              <div className="h-5 bg-gray-200 rounded-md w-3/4 animate-pulse" />
+              <div className="h-4 bg-gray-200 rounded-md w-1/2 animate-pulse" />
+            </div>
+            <div className="h-5 bg-gray-200 rounded-md w-16 animate-pulse" />
+          </div>
+          
+          <div className="flex gap-2">
+            <div className="h-6 bg-gray-200 rounded-full w-20 animate-pulse" />
+            <div className="h-6 bg-gray-200 rounded-full w-24 animate-pulse" />
+          </div>
+          
+          <div className="space-y-2">
+            <div className="h-4 bg-gray-200 rounded-md w-full animate-pulse" />
+            <div className="h-4 bg-gray-200 rounded-md w-4/5 animate-pulse" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Sponsored Card Variant
 export function SponsoredProCard({ pro, index }: ProCardProps) {
   return <ProCard pro={{ ...pro, isSponsored: true }} index={index} />
 }
