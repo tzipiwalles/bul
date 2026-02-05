@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
+import useEmblaCarousel from 'embla-carousel-react'
 import { 
   Star, 
   MapPin, 
@@ -20,7 +21,9 @@ import {
   Users,
   Briefcase,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Volume2,
+  VolumeX
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -49,19 +52,143 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null)
   const [isFavorite, setIsFavorite] = useState(false)
   const [isActionBarVisible, setIsActionBarVisible] = useState(false)
+  const [currentMediaIndex, setCurrentMediaIndex] = useState(0)
+  const [isPaused, setIsPaused] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [isMuted, setIsMuted] = useState(true)
+  
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([])
+  const autoPlayRef = useRef<NodeJS.Timeout | null>(null)
+  const progressRef = useRef<NodeJS.Timeout | null>(null)
   
   const serviceType = profile.service_type
   const openingHours = profile.opening_hours as OpeningHours | null
 
-  // Get all media items (images and videos)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const galleryImages = (profile as any).gallery_urls || []
-  const videos = profile.media_urls || []
-  const allMedia = [...galleryImages]
+  // Get all media items (images and videos combined)
+  const mediaUrls = profile.media_urls || []
+  const allMedia: { type: 'image' | 'video'; url: string }[] = []
   
-  // If avatar exists and no gallery, use avatar
+  // Add all media_urls (determine type by extension)
+  mediaUrls.forEach(url => {
+    const isVideo = /\.(mp4|webm|mov|avi)$/i.test(url)
+    allMedia.push({ type: isVideo ? 'video' : 'image', url })
+  })
+  
+  // If no media and avatar exists, use avatar
   if (allMedia.length === 0 && profile.avatar_url) {
-    allMedia.push(profile.avatar_url)
+    allMedia.push({ type: 'image', url: profile.avatar_url })
+  }
+  
+  const hasMultipleMedia = allMedia.length > 1
+  const SLIDE_DURATION = 5000 // 5 seconds per slide (longer for profile)
+  
+  // Embla Carousel
+  const [emblaRef, emblaApi] = useEmblaCarousel({ 
+    loop: true,
+    direction: 'rtl',
+  })
+  
+  // Update current index when embla changes
+  useEffect(() => {
+    if (!emblaApi) return
+    
+    const onSelect = () => {
+      setCurrentMediaIndex(emblaApi.selectedScrollSnap())
+      setProgress(0)
+    }
+    
+    // Initialize
+    onSelect()
+    
+    emblaApi.on('select', onSelect)
+    emblaApi.on('reInit', onSelect)
+    
+    return () => { 
+      emblaApi.off('select', onSelect)
+      emblaApi.off('reInit', onSelect)
+    }
+  }, [emblaApi])
+  
+  // Auto-slideshow (only for images, pause for videos)
+  useEffect(() => {
+    const currentMedia = allMedia[currentMediaIndex]
+    const isCurrentVideo = currentMedia?.type === 'video'
+    
+    // Clear previous timers
+    if (autoPlayRef.current) {
+      clearTimeout(autoPlayRef.current)
+      autoPlayRef.current = null
+    }
+    if (progressRef.current) {
+      clearInterval(progressRef.current)
+      progressRef.current = null
+    }
+    
+    // Don't run if conditions aren't met
+    if (!emblaApi || !hasMultipleMedia || isPaused || isCurrentVideo) {
+      return
+    }
+
+    // Start progress animation
+    const progressInterval = 50
+    let currentProgress = 0
+    
+    progressRef.current = setInterval(() => {
+      currentProgress += (progressInterval / SLIDE_DURATION) * 100
+      if (currentProgress >= 100) {
+        setProgress(100)
+      } else {
+        setProgress(currentProgress)
+      }
+    }, progressInterval)
+
+    // Auto-advance to next slide
+    autoPlayRef.current = setTimeout(() => {
+      if (emblaApi) {
+        emblaApi.scrollNext()
+      }
+    }, SLIDE_DURATION)
+
+    return () => {
+      if (autoPlayRef.current) {
+        clearTimeout(autoPlayRef.current)
+        autoPlayRef.current = null
+      }
+      if (progressRef.current) {
+        clearInterval(progressRef.current)
+        progressRef.current = null
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [emblaApi, hasMultipleMedia, isPaused, currentMediaIndex])
+  
+  // Handle video autoplay when slide changes
+  useEffect(() => {
+    videoRefs.current.forEach((video, index) => {
+      if (video) {
+        if (index === currentMediaIndex) {
+          video.play().catch(() => {})
+        } else {
+          video.pause()
+          video.currentTime = 0
+        }
+      }
+    })
+  }, [currentMediaIndex])
+  
+  const nextMedia = useCallback(() => {
+    emblaApi?.scrollNext()
+  }, [emblaApi])
+  
+  const prevMedia = useCallback(() => {
+    emblaApi?.scrollPrev()
+  }, [emblaApi])
+  
+  const toggleMute = () => {
+    setIsMuted(!isMuted)
+    videoRefs.current.forEach(video => {
+      if (video) video.muted = !isMuted
+    })
   }
 
   // Handle scroll to show sticky action bar
@@ -140,14 +267,105 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          {/* Cover with Gradient */}
-          <div className="h-40 md:h-48 bg-gradient-to-r from-primary via-primary to-blue-900 relative overflow-hidden">
-            {/* Decorative circles */}
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
-            <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-secondary/20 rounded-full blur-2xl" />
+          {/* Cover Media Carousel - WhatsApp Status Style */}
+          <div 
+            className="relative aspect-[16/9] md:aspect-[21/9] bg-gray-900 overflow-hidden"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+            onTouchStart={() => setIsPaused(true)}
+            onTouchEnd={() => setTimeout(() => setIsPaused(false), 1000)}
+          >
+            {/* Progress Bars */}
+            {hasMultipleMedia && (
+              <div className="absolute top-3 left-3 right-3 z-20 flex gap-1">
+                {allMedia.map((_, i) => (
+                  <div key={i} className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-white rounded-full transition-all duration-100 ease-linear"
+                      style={{ 
+                        width: i < currentMediaIndex 
+                          ? '100%' 
+                          : i === currentMediaIndex 
+                            ? `${progress}%` 
+                            : '0%' 
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Media Carousel */}
+            {allMedia.length > 0 ? (
+              <div className="absolute inset-0" ref={emblaRef}>
+                <div className="flex h-full">
+                  {allMedia.map((media, i) => (
+                    <div key={i} className="flex-[0_0_100%] min-w-0 h-full relative">
+                      {media.type === 'video' ? (
+                        <video
+                          ref={el => { videoRefs.current[i] = el }}
+                          src={media.url}
+                          muted={isMuted}
+                          loop
+                          playsInline
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={media.url}
+                          alt={`${profile.business_name} - ${i + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary to-blue-900">
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
+                <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-secondary/20 rounded-full blur-2xl" />
+              </div>
+            )}
+            
+            {/* Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none z-10" />
+            
+            {/* Navigation Arrows */}
+            {hasMultipleMedia && (
+              <>
+                <button 
+                  onClick={prevMedia}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full glass-dark flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+                >
+                  <ChevronLeft className="h-6 w-6 text-white" />
+                </button>
+                <button 
+                  onClick={nextMedia}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full glass-dark flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+                >
+                  <ChevronRight className="h-6 w-6 text-white" />
+                </button>
+              </>
+            )}
+            
+            {/* Mute/Unmute Button (for videos) */}
+            {allMedia.some(m => m.type === 'video') && (
+              <button
+                onClick={toggleMute}
+                className="absolute bottom-3 left-3 z-20 w-10 h-10 rounded-full glass-dark flex items-center justify-center"
+              >
+                {isMuted ? (
+                  <VolumeX className="h-5 w-5 text-white" />
+                ) : (
+                  <Volume2 className="h-5 w-5 text-white" />
+                )}
+              </button>
+            )}
             
             {/* Action Buttons */}
-            <div className="absolute top-4 left-4 flex gap-2">
+            <div className="absolute top-12 left-3 z-20 flex gap-2">
               <Button 
                 size="icon" 
                 variant="secondary" 
@@ -175,29 +393,24 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
                 <Heart className={cn("h-5 w-5", isFavorite ? "fill-white text-white" : "text-white")} />
               </Button>
             </div>
-
-            {/* Video Play Button */}
-            {videos.length > 0 && (
-              <motion.button
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full glass-dark flex items-center justify-center story-ring-glow"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setIsVideoOpen(true)}
-              >
-                <Play className="h-8 w-8 text-white fill-white ml-1" />
-              </motion.button>
+            
+            {/* Media Counter */}
+            {hasMultipleMedia && (
+              <div className="absolute bottom-3 right-3 z-20 glass-dark px-3 py-1 rounded-full text-white text-sm">
+                {currentMediaIndex + 1} / {allMedia.length}
+              </div>
             )}
           </div>
 
           {/* Profile Info */}
-          <div className="px-6 pb-6 relative">
+          <div className="px-6 pb-6 relative z-20">
             {/* Avatar */}
-            <div className="relative flex justify-between items-end -mt-14 mb-4">
-              <div className="relative">
+            <div className="relative flex justify-between items-end -mt-16 mb-4">
+              <div className="relative z-30">
                 <motion.div 
                   className={cn(
                     "w-28 h-28 rounded-2xl p-1 shadow-xl",
-                    videos.length > 0 ? "story-ring" : "bg-white"
+                    allMedia.some(m => m.type === 'video') ? "story-ring" : "bg-white"
                   )}
                   whileHover={{ scale: 1.02 }}
                 >
@@ -280,74 +493,20 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
           </div>
         </motion.div>
 
-        {/* Masonry Gallery */}
-        {allMedia.length > 0 && (
-          <motion.section 
-            className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100"
+        {/* Media info - only if there are multiple items */}
+        {allMedia.length > 1 && (
+          <motion.div 
+            className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-xl font-bold text-gray-900">גלריה</h2>
-              <span className="text-sm text-gray-500">{allMedia.length} תמונות</span>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Play className="h-4 w-4" />
+              <span>{allMedia.length} תמונות וסרטונים בגלריה</span>
             </div>
-            
-            <div className="masonry-grid">
-              {allMedia.map((url, index) => (
-                <motion.div
-                  key={index}
-                  className="masonry-item cursor-pointer group"
-                  whileHover={{ scale: 1.02 }}
-                  onClick={() => setSelectedImageIndex(index)}
-                >
-                  <div className="relative rounded-xl overflow-hidden bg-gray-100">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={url}
-                      alt={`${profile.business_name} - תמונה ${index + 1}`}
-                      className="w-full object-cover"
-                      loading="lazy"
-                      style={{ 
-                        aspectRatio: index % 3 === 0 ? '1/1' : index % 3 === 1 ? '3/4' : '4/3'
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.section>
-        )}
-
-        {/* Video Section */}
-        {videos.length > 0 && (
-          <motion.section 
-            className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-          >
-            <div className="flex items-center gap-2 mb-5">
-              <Play className="h-5 w-5 text-secondary" />
-              <h2 className="text-xl font-bold text-gray-900">הצצה לעבודה</h2>
-            </div>
-            <div className="space-y-4">
-              {videos.map((url, index) => (
-                <div key={index} className="rounded-2xl overflow-hidden bg-gray-900 shadow-lg">
-                  <video 
-                    controls 
-                    className="w-full aspect-video"
-                    poster={profile.avatar_url || undefined}
-                    preload="metadata"
-                  >
-                    <source src={url} type="video/mp4" />
-                    הדפדפן שלך אינו תומך בהצגת וידאו
-                  </video>
-                </div>
-              ))}
-            </div>
-          </motion.section>
+            <span className="text-xs text-gray-400">החליקו או לחצו לניווט</span>
+          </motion.div>
         )}
 
         {/* Content Grid */}
@@ -510,35 +669,7 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Video Viewer */}
-      <AnimatePresence>
-        {isVideoOpen && videos.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black flex items-center justify-center p-4"
-            onClick={() => setIsVideoOpen(false)}
-          >
-            <button
-              onClick={() => setIsVideoOpen(false)}
-              className="absolute top-4 left-4 z-10 w-12 h-12 rounded-full glass-dark flex items-center justify-center"
-            >
-              <X className="h-6 w-6 text-white" />
-            </button>
-            <div 
-              className="relative max-w-4xl w-full aspect-video rounded-2xl overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <video autoPlay controls className="w-full h-full">
-                <source src={videos[0]} type="video/mp4" />
-              </video>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Image Lightbox */}
+      {/* Fullscreen Media Viewer */}
       <AnimatePresence>
         {selectedImageIndex !== null && (
           <motion.div
@@ -580,17 +711,27 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
             )}
 
             <motion.div 
-              className="max-w-4xl max-h-[80vh] p-4"
+              className="max-w-4xl max-h-[80vh] w-full p-4"
               onClick={(e) => e.stopPropagation()}
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={allMedia[selectedImageIndex]}
-                alt=""
-                className="max-w-full max-h-[80vh] object-contain rounded-lg"
-              />
+              {allMedia[selectedImageIndex]?.type === 'video' ? (
+                <video 
+                  autoPlay 
+                  controls 
+                  className="w-full max-h-[80vh] rounded-lg"
+                >
+                  <source src={allMedia[selectedImageIndex].url} type="video/mp4" />
+                </video>
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={allMedia[selectedImageIndex]?.url}
+                  alt=""
+                  className="max-w-full max-h-[80vh] object-contain rounded-lg mx-auto"
+                />
+              )}
             </motion.div>
 
             {/* Counter */}

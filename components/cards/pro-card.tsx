@@ -78,18 +78,27 @@ export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProC
     dragFree: false,
   })
   
-  // Build image array - for females (modesty rules), only show work samples/logos
-  const images = pro.galleryImages?.length 
+  // Build media array - for females (modesty rules), only show work samples/logos
+  // Identify videos by extension
+  const allMediaUrls = pro.galleryImages?.length 
     ? pro.galleryImages 
     : pro.avatarUrl 
       ? [pro.avatarUrl]
       : pro.imageUrl 
         ? [pro.imageUrl]
         : []
-
-  const showCarousel = images.length > 1
+  
+  // Separate images and videos
+  const mediaItems: { type: 'image' | 'video'; url: string }[] = allMediaUrls.map(url => ({
+    type: /\.(mp4|webm|mov|avi)$/i.test(url) ? 'video' : 'image',
+    url
+  }))
+  
+  const images = mediaItems.map(m => m.url) // For backward compatibility
+  const showCarousel = mediaItems.length > 1
   const hasVideoPreview = pro.hasVideo && pro.videoUrl
-  const SLIDE_DURATION = 4000 // 4 seconds per slide
+  const hasVideoInGallery = mediaItems.some(m => m.type === 'video')
+  const SLIDE_DURATION = 4000 // 4 seconds per slide (shorter for videos)
 
   // Update current slide index when embla changes
   useEffect(() => {
@@ -265,24 +274,49 @@ export function ProCard({ pro, index = 0, onVideoClick, priority = false }: ProC
                   )}
                 </button>
               </div>
-            ) : images.length > 0 ? (
+            ) : mediaItems.length > 0 ? (
               <>
                 {/* Embla Carousel for smooth touch swiping */}
                 <div className="absolute inset-0 overflow-hidden" ref={emblaRef}>
                   <div className="flex h-full">
-                    {images.map((img, i) => (
+                    {mediaItems.map((media, i) => (
                       <div key={i} className="flex-[0_0_100%] min-w-0 h-full">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={img}
-                          alt={`${pro.name} - ${i + 1}`}
-                          className="w-full h-full object-cover"
-                          loading={i === 0 ? 'eager' : 'lazy'}
-                        />
+                        {media.type === 'video' ? (
+                          <video
+                            src={media.url}
+                            muted={isMuted}
+                            loop
+                            playsInline
+                            autoPlay={i === currentImageIndex && isInView}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={media.url}
+                            alt={`${pro.name} - ${i + 1}`}
+                            className="w-full h-full object-cover"
+                            loading={i === 0 ? 'eager' : 'lazy'}
+                          />
+                        )}
                       </div>
                     ))}
                   </div>
                 </div>
+
+                {/* Mute/Unmute for gallery videos */}
+                {hasVideoInGallery && (
+                  <button
+                    onClick={toggleMute}
+                    className="absolute bottom-3 left-3 z-10 w-8 h-8 rounded-full glass flex items-center justify-center transition-transform hover:scale-110"
+                  >
+                    {isMuted ? (
+                      <VolumeX className="h-4 w-4 text-gray-700" />
+                    ) : (
+                      <Volume2 className="h-4 w-4 text-gray-700" />
+                    )}
+                  </button>
+                )}
 
                 {/* Carousel Navigation - only show on hover, arrows work in loop mode */}
                 {showCarousel && (

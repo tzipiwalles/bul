@@ -21,6 +21,7 @@ import { CITIES } from '@/lib/constants'
 import { CategoryPicker } from '@/components/category-picker'
 import { COMMUNITIES } from '@/lib/communities'
 import { createClient } from '@/lib/supabase/client'
+import { compressImage, isImageFile, formatFileSize } from '@/lib/image-utils'
 import type { Profile, ServiceType, Gender } from '@/types/database'
 
 export default function AdminProfileEditPage() {
@@ -105,7 +106,7 @@ export default function AdminProfileEditPage() {
     init()
   }, [supabase, profileId, router])
 
-  // Handle avatar upload
+  // Handle avatar upload via admin API
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -114,20 +115,32 @@ export default function AdminProfileEditPage() {
     setMessage(null)
 
     try {
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${profileId}/avatar-${Date.now()}.${fileExt}`
+      // Compress image
+      let processedFile = file
+      if (isImageFile(file)) {
+        processedFile = await compressImage(file, {
+          maxWidthOrHeight: 400,
+          quality: 0.85,
+        })
+      }
 
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, file, { upsert: true })
+      // Upload via admin API
+      const formData = new FormData()
+      formData.append('file', processedFile)
+      formData.append('profileId', profileId)
 
-      if (uploadError) throw uploadError
+      const response = await fetch('/api/admin/upload-avatar', {
+        method: 'POST',
+        body: formData,
+      })
 
-      const { data: urlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName)
+      const result = await response.json()
 
-      setProfile(prev => ({ ...prev, avatar_url: urlData.publicUrl }))
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to upload')
+      }
+
+      setProfile(prev => ({ ...prev, avatar_url: result.avatarUrl }))
       setMessage({ type: 'success', text: 'התמונה הועלתה בהצלחה' })
     } catch (error) {
       console.error('Avatar upload error:', error)
@@ -137,7 +150,7 @@ export default function AdminProfileEditPage() {
     }
   }
 
-  // Handle media upload
+  // Handle media upload via admin API
   const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
@@ -149,29 +162,61 @@ export default function AdminProfileEditPage() {
       const newMediaUrls: string[] = []
 
       for (const file of Array.from(files)) {
-        const fileExt = file.name.split('.').pop()
+        let processedFile = file
+        let fileExt = file.name.split('.').pop()
+
+        // Compress images (not videos)
+        if (isImageFile(file)) {
+          processedFile = await compressImage(file, {
+            maxWidthOrHeight: 1200,
+            quality: 0.8,
+          })
+          fileExt = 'webp'
+        }
+
         const fileName = `${profileId}/media-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`
 
-        const { error: uploadError } = await supabase.storage
-          .from('media')
-          .upload(fileName, file)
+        // Upload via admin API
+        const formData = new FormData()
+        formData.append('file', processedFile)
+        formData.append('profileId', profileId)
+        formData.append('fileName', fileName)
 
-        if (uploadError) {
-          console.error('Upload error:', uploadError)
+        const response = await fetch('/api/admin/upload-file', {
+          method: 'POST',
+          body: formData,
+        })
+
+        const result = await response.json()
+
+        if (!response.ok) {
+          console.error('Upload error:', result.error)
           continue
         }
 
-        const { data: urlData } = supabase.storage
-          .from('media')
-          .getPublicUrl(fileName)
-
-        newMediaUrls.push(urlData.publicUrl)
+        newMediaUrls.push(result.publicUrl)
       }
 
-      setProfile(prev => ({
-        ...prev,
-        media_urls: [...(prev.media_urls || []), ...newMediaUrls]
-      }))
+      if (newMediaUrls.length > 0) {
+        // Update profile via admin API
+        const updateResponse = await fetch('/api/admin/upload-media', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            profileId,
+            mediaUrls: newMediaUrls,
+          }),
+        })
+
+        const updateResult = await updateResponse.json()
+
+        if (updateResponse.ok) {
+          setProfile(prev => ({
+            ...prev,
+            media_urls: updateResult.mediaUrls
+          }))
+        }
+      }
       
       setMessage({ type: 'success', text: `${newMediaUrls.length} קבצים הועלו בהצלחה` })
     } catch (error) {
@@ -190,7 +235,7 @@ export default function AdminProfileEditPage() {
     }))
   }
 
-  // Save profile
+  // Save profile via admin API
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSaving(true)
@@ -215,12 +260,20 @@ export default function AdminProfileEditPage() {
         community: profile.community,
       }
 
-      const { error } = await supabase
-        .from('profiles')
-        .update(updateData)
-        .eq('id', profileId)
+      const response = await fetch('/api/admin/update-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          profileId,
+          updates: updateData,
+        }),
+      })
 
-      if (error) throw error
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to save')
+      }
 
       setMessage({ type: 'success', text: 'הפרטים נשמרו בהצלחה!' })
     } catch (error) {
