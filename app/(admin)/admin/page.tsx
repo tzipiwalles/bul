@@ -23,7 +23,7 @@ const SERVICE_TYPES = [
   { value: 'appointment', label: 'קביעת תור' },
   { value: 'project', label: 'פרויקטים / הצעת מחיר' },
   { value: 'emergency', label: 'שירות חירום 24/6' },
-  { value: 'retail', label: 'חנות / קמעונאות' },
+  { value: 'retail', label: 'קניות ומסחר' },
 ]
 
 export default function AdminPage() {

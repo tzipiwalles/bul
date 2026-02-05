@@ -36,8 +36,8 @@ const SERVICE_TYPES: { value: ServiceType; label: string; description: string; i
   },
   {
     value: 'retail',
-    label: 'חנות / מסעדה',
-    description: 'פיצריה, חנות בגדים - מיקום פיזי',
+    label: 'קניות ומסחר',
+    description: 'חנויות, מסעדות, מאפיות - מיקום פיזי',
     icon: <Store className="h-5 w-5" />,
   },
 ]

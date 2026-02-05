@@ -36,7 +36,7 @@ const SERVICE_TYPE_CONFIG = {
   appointment: { name: 'קביעת תור', icon: Calendar, color: 'bg-blue-500', badgeColor: 'bg-blue-50 text-blue-700 border-blue-200' },
   project: { name: 'פרויקטים', icon: Wrench, color: 'bg-green-500', badgeColor: 'bg-green-50 text-green-700 border-green-200' },
   emergency: { name: 'חירום 24/6', icon: AlertTriangle, color: 'bg-red-500', badgeColor: 'bg-red-50 text-red-700 border-red-200' },
-  retail: { name: 'חנות', icon: Store, color: 'bg-purple-500', badgeColor: 'bg-purple-50 text-purple-700 border-purple-200' },
+  retail: { name: 'קניות ומסחר', icon: Store, color: 'bg-purple-500', badgeColor: 'bg-purple-50 text-purple-700 border-purple-200' },
 }
 
 // Convert database profile to display format
@@ -548,7 +548,7 @@ function SearchContent() {
               <Badge variant="secondary" className="gap-1 bg-green-50 text-green-700">
                 {selectedServiceType === 'appointment' ? 'קביעת תור' : 
                  selectedServiceType === 'project' ? 'פרויקטים' : 
-                 selectedServiceType === 'emergency' ? 'חירום' : 'חנות'}
+                 selectedServiceType === 'emergency' ? 'חירום' : 'קניות ומסחר'}
                 <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedServiceType(null)} />
               </Badge>
             )}

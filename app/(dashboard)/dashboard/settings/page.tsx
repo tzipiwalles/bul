@@ -473,7 +473,7 @@ export default function SettingsPage() {
                     <SelectItem value="appointment">קביעת תור</SelectItem>
                     <SelectItem value="project">פרויקטים / הצעת מחיר</SelectItem>
                     <SelectItem value="emergency">שירות חירום 24/6</SelectItem>
-                    <SelectItem value="retail">חנות / קמעונאות</SelectItem>
+                    <SelectItem value="retail">קניות ומסחר</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

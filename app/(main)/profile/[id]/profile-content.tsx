@@ -89,7 +89,7 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
       case 'emergency':
         return { icon: Phone, label: 'התקשר עכשיו', color: 'bg-red-500 hover:bg-red-600' }
       case 'retail':
-        return { icon: Navigation, label: 'נווט לחנות', color: 'bg-purple-500 hover:bg-purple-600' }
+        return { icon: Navigation, label: 'נווט לעסק', color: 'bg-purple-500 hover:bg-purple-600' }
       default:
         return { icon: Phone, label: 'צור קשר', color: 'bg-secondary hover:bg-secondary/90' }
     }

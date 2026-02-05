@@ -23,7 +23,7 @@ const SERVICE_BADGE_CONFIG = {
   appointment: { label: 'קביעת תור', icon: Calendar, className: 'bg-blue-50 text-blue-700 border-blue-200' },
   project: { label: 'פרויקטים', icon: Wrench, className: 'bg-green-50 text-green-700 border-green-200' },
   emergency: { label: 'חירום 24/6', icon: AlertTriangle, className: 'bg-red-50 text-red-700 border-red-200' },
-  retail: { label: 'חנות', icon: Store, className: 'bg-purple-50 text-purple-700 border-purple-200' },
+  retail: { label: 'קניות ומסחר', icon: Store, className: 'bg-purple-50 text-purple-700 border-purple-200' },
 }
 
 interface ProfessionalCardProps {

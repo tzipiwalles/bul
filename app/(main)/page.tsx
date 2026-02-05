@@ -67,13 +67,13 @@ const SERVICE_TYPES = [
   },
   {
     id: 'retail',
-    name: 'חנויות',
-    description: 'מזון, בגדים, יודאיקה',
+    name: 'קניות ומסחר',
+    description: 'חנויות, מזון, בגדים',
     icon: Store,
     gradient: 'from-purple-500 to-violet-600',
     lightBg: 'bg-purple-50',
     iconBg: 'bg-purple-500',
-    examples: ['חנות בגדים', 'מאפייה', 'יודאיקה'],
+    examples: ['סופר', 'מאפייה', 'חנות בגדים'],
   },
 ]
 

@@ -49,7 +49,7 @@ const SERVICE_CONFIG = {
   appointment: { label: 'קביעת תור', icon: Calendar, color: 'bg-blue-500', textColor: 'text-blue-600', bgColor: 'bg-blue-50' },
   project: { label: 'פרויקטים', icon: Wrench, color: 'bg-green-500', textColor: 'text-green-600', bgColor: 'bg-green-50' },
   emergency: { label: 'חירום 24/6', icon: AlertTriangle, color: 'bg-red-500', textColor: 'text-red-600', bgColor: 'bg-red-50' },
-  retail: { label: 'חנות', icon: Store, color: 'bg-purple-500', textColor: 'text-purple-600', bgColor: 'bg-purple-50' },
+  retail: { label: 'קניות ומסחר', icon: Store, color: 'bg-purple-500', textColor: 'text-purple-600', bgColor: 'bg-purple-50' },
 }
 
 interface ProCardProps {
