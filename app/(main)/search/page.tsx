@@ -239,18 +239,74 @@ export default function SearchPage() {
                 )}
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-80">
+            <SheetContent side="right" className="w-[340px] overflow-y-auto">
               <SheetHeader>
-                <SheetTitle>סינון תוצאות</SheetTitle>
-                <SheetDescription>בחר את הפילטרים הרצויים</SheetDescription>
+                <SheetTitle className="flex items-center justify-between">
+                  סינון תוצאות
+                  {activeFiltersCount > 0 && (
+                    <Badge variant="secondary" className="bg-primary/10 text-primary">
+                      {activeFiltersCount} פילטרים פעילים
+                    </Badge>
+                  )}
+                </SheetTitle>
               </SheetHeader>
               
-              <div className="space-y-6 mt-6">
+              <div className="space-y-6 mt-6 pb-20">
+                {/* Service Type Filter - Visual Cards */}
+                <div className="space-y-3">
+                  <Label className="text-base font-semibold">סוג שירות</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(SERVICE_TYPE_CONFIG).map(([id, config]) => {
+                      const Icon = config.icon
+                      const isSelected = selectedServiceType === id
+                      return (
+                        <button
+                          key={id}
+                          onClick={() => setSelectedServiceType(isSelected ? null : id)}
+                          className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all ${
+                            isSelected 
+                              ? `${config.badgeColor} border-current` 
+                              : 'border-gray-100 hover:border-gray-200 bg-white'
+                          }`}
+                        >
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isSelected ? config.color : 'bg-gray-100'} ${isSelected ? 'text-white' : 'text-gray-500'}`}>
+                            <Icon className="h-5 w-5" />
+                          </div>
+                          <span className={`text-xs font-medium ${isSelected ? '' : 'text-gray-600'}`}>
+                            {config.name}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Category Filter with Search */}
+                <div className="space-y-3">
+                  <Label className="text-base font-semibold">קטגוריה</Label>
+                  <Select value={selectedCategory || '__all__'} onValueChange={(v) => setSelectedCategory(v === '__all__' ? null : v)}>
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="כל הקטגוריות" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      <SelectItem value="__all__">כל הקטגוריות</SelectItem>
+                      {CATEGORIES.map(cat => (
+                        <SelectItem key={cat.id} value={cat.name}>
+                          <span className="flex items-center gap-2">
+                            <span>{cat.icon}</span>
+                            <span>{cat.name}</span>
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
                 {/* City Filter */}
-                <div className="space-y-2">
-                  <Label>עיר</Label>
+                <div className="space-y-3">
+                  <Label className="text-base font-semibold">עיר</Label>
                   <Select value={selectedCity || '__all__'} onValueChange={(v) => setSelectedCity(v === '__all__' ? null : v)}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-11">
                       <SelectValue placeholder="כל הערים" />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
@@ -260,46 +316,29 @@ export default function SearchPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-                
-                {/* Category Filter */}
-                <div className="space-y-2">
-                  <Label>קטגוריה</Label>
-                  <Select value={selectedCategory || '__all__'} onValueChange={(v) => setSelectedCategory(v === '__all__' ? null : v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="כל הקטגוריות" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-60">
-                      <SelectItem value="__all__">כל הקטגוריות</SelectItem>
-                      {CATEGORIES.map(cat => (
-                        <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                {/* Service Type Filter */}
-                <div className="space-y-2">
-                  <Label>סוג שירות</Label>
-                  <Select value={selectedServiceType || '__all__'} onValueChange={(v) => setSelectedServiceType(v === '__all__' ? null : v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="כל הסוגים" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__all__">כל הסוגים</SelectItem>
-                      <SelectItem value="appointment">קביעת תור</SelectItem>
-                      <SelectItem value="project">פרויקטים</SelectItem>
-                      <SelectItem value="emergency">חירום</SelectItem>
-                      <SelectItem value="retail">חנות</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {/* Quick City Buttons */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {['ירושלים', 'בני ברק', 'מודיעין עילית', 'ביתר עילית'].map(city => (
+                      <button
+                        key={city}
+                        onClick={() => setSelectedCity(selectedCity === city ? null : city)}
+                        className={`px-2.5 py-1 text-xs rounded-full transition-all ${
+                          selectedCity === city 
+                            ? 'bg-primary text-white' 
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {city}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 
                 {/* Community Filter */}
-                <div className="space-y-2">
-                  <Label>קהילה / חסידות</Label>
+                <div className="space-y-3">
+                  <Label className="text-base font-semibold">קהילה / חסידות</Label>
                   <Select value={selectedCommunity || '__all__'} onValueChange={(v) => setSelectedCommunity(v === '__all__' ? null : v)}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-11">
                       <SelectValue placeholder="כל הקהילות" />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
@@ -311,40 +350,80 @@ export default function SearchPage() {
                   </Select>
                 </div>
                 
-                {/* Toggle Filters */}
+                {/* Toggle Filters - More Visual */}
                 <div className="space-y-3">
-                  <Label>אפשרויות נוספות</Label>
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      size="sm"
-                      variant={onlyVerified ? "default" : "outline"}
-                      className={onlyVerified ? "bg-primary" : ""}
+                  <Label className="text-base font-semibold">סינון מתקדם</Label>
+                  <div className="space-y-2">
+                    <button
                       onClick={() => setOnlyVerified(!onlyVerified)}
+                      className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all ${
+                        onlyVerified 
+                          ? 'border-blue-200 bg-blue-50' 
+                          : 'border-gray-100 bg-white hover:border-gray-200'
+                      }`}
                     >
-                      מאומתים בלבד
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant={onlyWithVideo ? "default" : "outline"}
-                      className={onlyWithVideo ? "bg-secondary" : ""}
+                      <span className="flex items-center gap-2">
+                        <span className={`w-8 h-8 rounded-lg flex items-center justify-center ${onlyVerified ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                          ✓
+                        </span>
+                        <span className={`text-sm font-medium ${onlyVerified ? 'text-blue-700' : 'text-gray-600'}`}>
+                          מאומתים בלבד
+                        </span>
+                      </span>
+                      <div className={`w-10 h-6 rounded-full transition-all ${onlyVerified ? 'bg-blue-500' : 'bg-gray-200'}`}>
+                        <div className={`w-5 h-5 rounded-full bg-white shadow-sm transform transition-all mt-0.5 ${onlyVerified ? 'mr-0.5' : 'mr-4'}`} />
+                      </div>
+                    </button>
+                    
+                    <button
                       onClick={() => setOnlyWithVideo(!onlyWithVideo)}
+                      className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all ${
+                        onlyWithVideo 
+                          ? 'border-orange-200 bg-orange-50' 
+                          : 'border-gray-100 bg-white hover:border-gray-200'
+                      }`}
                     >
-                      עם סרטון בלבד
-                    </Button>
+                      <span className="flex items-center gap-2">
+                        <span className={`w-8 h-8 rounded-lg flex items-center justify-center ${onlyWithVideo ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                          ▶
+                        </span>
+                        <span className={`text-sm font-medium ${onlyWithVideo ? 'text-orange-700' : 'text-gray-600'}`}>
+                          עם סרטון בלבד
+                        </span>
+                      </span>
+                      <div className={`w-10 h-6 rounded-full transition-all ${onlyWithVideo ? 'bg-orange-500' : 'bg-gray-200'}`}>
+                        <div className={`w-5 h-5 rounded-full bg-white shadow-sm transform transition-all mt-0.5 ${onlyWithVideo ? 'mr-0.5' : 'mr-4'}`} />
+                      </div>
+                    </button>
                   </div>
                 </div>
                 
-                {/* Clear All */}
+                {/* Clear All - Fixed at Bottom */}
                 {activeFiltersCount > 0 && (
-                  <Button 
-                    variant="outline" 
-                    className="w-full" 
-                    onClick={clearAllFilters}
-                  >
-                    <X className="h-4 w-4 ml-2" />
-                    נקה את כל הפילטרים
-                  </Button>
+                  <div className="pt-4 border-t">
+                    <Button 
+                      variant="outline" 
+                      className="w-full h-11 text-destructive border-destructive/30 hover:bg-destructive/5" 
+                      onClick={() => {
+                        clearAllFilters()
+                        setIsFilterOpen(false)
+                      }}
+                    >
+                      <X className="h-4 w-4 ml-2" />
+                      נקה הכל ואתחל מחדש
+                    </Button>
+                  </div>
                 )}
+                
+                {/* Apply Button */}
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-lg">
+                  <Button 
+                    className="w-full h-12 text-base font-bold bg-primary hover:bg-primary/90"
+                    onClick={() => setIsFilterOpen(false)}
+                  >
+                    הצג {professionals.length} תוצאות
+                  </Button>
+                </div>
               </div>
             </SheetContent>
           </Sheet>
