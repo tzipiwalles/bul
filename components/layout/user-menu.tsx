@@ -37,31 +37,52 @@ export function UserMenu() {
 
   useEffect(() => {
     async function checkUser() {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      
-      if (user) {
-        // Check if user has a business profile
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', user.id)
-          .single()
+      try {
+        // Add timeout to prevent infinite loading
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), 5000)
+        )
         
-        setIsBusinessOwner(!!profile)
+        const userPromise = supabase.auth.getUser()
+        const { data: { user } } = await Promise.race([userPromise, timeoutPromise]) as Awaited<typeof userPromise>
+        
+        setUser(user)
+        
+        if (user) {
+          // Check if user has a business profile - with timeout
+          try {
+            const { data: profile } = await Promise.race([
+              supabase.from('profiles').select('id').eq('id', user.id).maybeSingle(),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Profile timeout')), 3000))
+            ]) as { data: { id: string } | null }
+            
+            setIsBusinessOwner(!!profile)
+          } catch (e) {
+            console.warn('Profile check failed:', e)
+            setIsBusinessOwner(false)
+          }
 
-        // Check if user is admin
-        const { data: adminData, error: adminError } = await supabase
-          .from('admins')
-          .select('user_id')
-          .eq('user_id', user.id)
-          .maybeSingle()
-        
-        console.log('Admin check:', { adminData, adminError, userId: user.id })
-        setIsAdmin(!!adminData)
+          // Check if user is admin - with timeout
+          try {
+            const { data: adminData } = await Promise.race([
+              supabase.from('admins').select('user_id').eq('user_id', user.id).maybeSingle(),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Admin timeout')), 3000))
+            ]) as { data: { user_id: string } | null }
+            
+            setIsAdmin(!!adminData)
+          } catch (e) {
+            console.warn('Admin check failed:', e)
+            setIsAdmin(false)
+          }
+        }
+      } catch (error) {
+        console.error('UserMenu checkUser error:', error)
+        setUser(null)
+        setIsBusinessOwner(false)
+        setIsAdmin(false)
+      } finally {
+        setLoading(false)
       }
-      
-      setLoading(false)
     }
 
     checkUser()
@@ -72,23 +93,31 @@ export function UserMenu() {
         setUser(session?.user ?? null)
         
         if (session?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('id', session.user.id)
-            .single()
-          
-          setIsBusinessOwner(!!profile)
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('id', session.user.id)
+              .maybeSingle()
+            
+            setIsBusinessOwner(!!profile)
+          } catch (e) {
+            console.warn('Profile check on auth change failed:', e)
+            setIsBusinessOwner(false)
+          }
 
-          // Check if user is admin
-          const { data: adminData, error: adminError } = await supabase
-            .from('admins')
-            .select('user_id')
-            .eq('user_id', session.user.id)
-            .maybeSingle()
-          
-          console.log('Admin check (auth change):', { adminData, adminError, userId: session.user.id })
-          setIsAdmin(!!adminData)
+          try {
+            const { data: adminData } = await supabase
+              .from('admins')
+              .select('user_id')
+              .eq('user_id', session.user.id)
+              .maybeSingle()
+            
+            setIsAdmin(!!adminData)
+          } catch (e) {
+            console.warn('Admin check on auth change failed:', e)
+            setIsAdmin(false)
+          }
         } else {
           setIsBusinessOwner(false)
           setIsAdmin(false)
