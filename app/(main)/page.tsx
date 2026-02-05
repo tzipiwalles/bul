@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Search, 
   MapPin, 
@@ -17,7 +17,9 @@ import {
   CheckCircle2,
   Sparkles,
   TrendingUp,
-  Star
+  Star,
+  X,
+  Grid3X3
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,10 +30,55 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { CATEGORIES, CITIES } from '@/lib/constants'
 import { StoriesBar, StoriesBarSkeleton } from '@/components/features/stories-bar'
 import { createClient } from '@/lib/supabase/client'
-import { AnimatePresence } from 'framer-motion'
+
+// Category groups for the dialog
+const CATEGORY_GROUPS = [
+  {
+    title: 'בית ומשפחה',
+    categories: ['בריאות', 'יופי וטיפוח', 'בית ושיפוצים', 'מזון ומסעדות', 'ניקיון ותחזוקה', 'ריהוט וציוד', 'גינון ונוף'],
+  },
+  {
+    title: 'ילדים וחינוך',
+    categories: ['חינוך והוראה', 'ילדים ונוער', 'שיעורים פרטיים', 'מעונות וגנים'],
+  },
+  {
+    title: 'אירועים ושמחות',
+    categories: ['אירועים ושמחות', 'צילום ווידאו', 'מוזיקה ונגינה', 'קייטרינג', 'פרחים ועיצוב'],
+  },
+  {
+    title: 'מקצועות חופשיים',
+    categories: ['משפטי ופיננסי', 'ביטוח', 'נדל"ן'],
+  },
+  {
+    title: 'טכנולוגיה ותקשורת',
+    categories: ['טכנולוגיה', 'דפוס והדפסה', 'תקשורת ופרסום', 'עיצוב גרפי'],
+  },
+  {
+    title: 'תחבורה ולוגיסטיקה',
+    categories: ['הסעות ותחבורה', 'הובלות', 'משלוחים'],
+  },
+  {
+    title: 'אופנה וטקסטיל',
+    categories: ['אופנה והלבשה', 'פאות ושיער', 'תכשיטים'],
+  },
+  {
+    title: 'יודאיקה וספרים',
+    categories: ['יודאיקה', 'ספרים והוצאה לאור', 'סת"ם'],
+  },
+  {
+    title: 'שירותים נוספים',
+    categories: ['חיות מחמד', 'אבטחה', 'מיזוג אוויר', 'מכשירי חשמל', 'תיירות ונופש', 'ספורט וכושר', 'טיפול רגשי', 'רפואה משלימה'],
+  },
+]
 
 // Service type definitions with visual styling
 const SERVICE_TYPES = [
@@ -109,6 +156,29 @@ export default function HomePage() {
   const [stats, setStats] = useState({ professionals: 0, categories: 40, cities: 50 })
   const [isFocused, setIsFocused] = useState(false)
   const [isLoadingStories, setIsLoadingStories] = useState(true)
+  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false)
+  const [categorySearch, setCategorySearch] = useState('')
+
+  // Filter categories based on search
+  const filteredCategoryGroups = useMemo(() => {
+    if (!categorySearch) return CATEGORY_GROUPS
+    
+    const searchLower = categorySearch.toLowerCase()
+    return CATEGORY_GROUPS.map(group => ({
+      ...group,
+      categories: group.categories.filter(cat => {
+        const category = CATEGORIES.find(c => c.name === cat)
+        return cat.toLowerCase().includes(searchLower) ||
+               category?.description?.toLowerCase().includes(searchLower)
+      })
+    })).filter(group => group.categories.length > 0)
+  }, [categorySearch])
+
+  const handleCategorySelect = (categoryName: string) => {
+    setIsCategoriesOpen(false)
+    setCategorySearch('')
+    router.push(`/search?category=${encodeURIComponent(categoryName)}`)
+  }
 
   useEffect(() => {
     const supabase = createClient()
@@ -128,6 +198,9 @@ export default function HomePage() {
         }
 
         if (data) {
+          console.log('Raw profiles from DB:', data.length)
+          console.log('Profiles with media_urls:', data.filter(p => p.media_urls && p.media_urls.length > 0).length)
+          
           // Filter for profiles that actually have media content
           const stories: StoryProfile[] = data
             .filter(p => p.media_urls && Array.isArray(p.media_urls) && p.media_urls.length > 0)
@@ -140,7 +213,7 @@ export default function HomePage() {
               category: p.categories?.[0] || 'עסק',
               isNew: new Date(p.created_at).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000
             }))
-          console.log('Story profiles found:', stories.length)
+          console.log('Story profiles found:', stories.length, stories)
           setStoryProfiles(stories)
         }
       } catch (err) {
@@ -394,10 +467,13 @@ export default function HomePage() {
             <TrendingUp className="h-6 w-6 text-secondary" />
             <h2 className="text-xl font-bold text-gray-900">קטגוריות פופולריות</h2>
           </div>
-          <Link href="/search" className="text-primary hover:underline text-sm font-medium flex items-center gap-1">
-            הכל
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
+          <button 
+            onClick={() => setIsCategoriesOpen(true)}
+            className="text-primary hover:underline text-sm font-medium flex items-center gap-1"
+          >
+            כל הקטגוריות
+            <Grid3X3 className="h-4 w-4" />
+          </button>
         </div>
         
         <motion.div 
@@ -502,6 +578,71 @@ export default function HomePage() {
           </Link>
         </div>
       </motion.section>
+
+      {/* All Categories Dialog */}
+      <Dialog open={isCategoriesOpen} onOpenChange={setIsCategoriesOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-xl">כל הקטגוריות</DialogTitle>
+          </DialogHeader>
+          
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="חפש קטגוריה..."
+              value={categorySearch}
+              onChange={(e) => setCategorySearch(e.target.value)}
+              className="pr-9"
+              autoFocus
+            />
+            {categorySearch && (
+              <button
+                onClick={() => setCategorySearch('')}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Categories Grid */}
+          <div className="overflow-y-auto flex-1 mt-4 -mx-6 px-6">
+            {filteredCategoryGroups.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                לא נמצאו קטגוריות מתאימות
+              </div>
+            ) : (
+              <div className="space-y-6 pb-4">
+                {filteredCategoryGroups.map(group => (
+                  <div key={group.title}>
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-3">
+                      {group.title}
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {group.categories.map(catName => {
+                        const category = CATEGORIES.find(c => c.name === catName)
+                        if (!category) return null
+                        
+                        return (
+                          <button
+                            key={category.id}
+                            onClick={() => handleCategorySelect(category.name)}
+                            className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 text-right transition-all hover:border-primary hover:bg-primary/5 hover:shadow-sm"
+                          >
+                            <span className="text-xl">{category.icon}</span>
+                            <span className="font-medium text-sm truncate">{category.name}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
