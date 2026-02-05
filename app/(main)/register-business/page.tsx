@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { CategoryPicker } from '@/components/category-picker'
+import { TermsConsent } from '@/components/legal-modal'
 import { CITIES } from '@/lib/constants'
 import { ArrowRight, Store, Loader2 } from 'lucide-react'
 import type { Gender, ServiceType } from '@/types/database'
@@ -40,6 +41,7 @@ export default function RegisterBusinessPage() {
   const [serviceType, setServiceType] = useState<ServiceType>('project')
   const [category, setCategory] = useState('')
   const [description, setDescription] = useState('')
+  const [termsAccepted, setTermsAccepted] = useState(false)
 
   useEffect(() => {
     async function checkUser() {
@@ -105,6 +107,12 @@ export default function RegisterBusinessPage() {
     // Validation
     if (!businessName || !phone || !city || !category) {
       setError('נא למלא את כל השדות הנדרשים')
+      setSubmitting(false)
+      return
+    }
+
+    if (!termsAccepted) {
+      setError('יש לאשר את תנאי השימוש כדי להמשיך')
       setSubmitting(false)
       return
     }
@@ -285,7 +293,15 @@ export default function RegisterBusinessPage() {
               />
             </div>
 
-            <Button type="submit" className="w-full" size="lg" disabled={submitting}>
+            {/* Terms Consent */}
+            <div className="bg-gray-50 p-4 rounded-xl">
+              <TermsConsent
+                checked={termsAccepted}
+                onChange={setTermsAccepted}
+              />
+            </div>
+
+            <Button type="submit" className="w-full" size="lg" disabled={submitting || !termsAccepted}>
               {submitting ? (
                 <>
                   <Loader2 className="ml-2 h-4 w-4 animate-spin" />

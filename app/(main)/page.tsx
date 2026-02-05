@@ -40,77 +40,57 @@ import { CATEGORIES, CITIES } from '@/lib/constants'
 import { StoriesBar, StoriesBarSkeleton } from '@/components/features/stories-bar'
 import { createClient } from '@/lib/supabase/client'
 
-// Category groups for the dialog
+// Category groups for the dialog - matching actual database values
 const CATEGORY_GROUPS = [
   {
-    title: 'בית ומשפחה',
-    categories: ['בריאות', 'יופי וטיפוח', 'בית ושיפוצים', 'מזון ומסעדות', 'ניקיון ותחזוקה', 'ריהוט וציוד', 'גינון ונוף'],
+    title: 'בית ושיפוצים',
+    categories: ['אינסטלטורים', 'חשמלאים', 'שיפוצים', 'צביעה', 'מיזוג אוויר', 'ריהוט', 'ניקיון'],
   },
   {
-    title: 'ילדים וחינוך',
-    categories: ['חינוך והוראה', 'ילדים ונוער', 'שיעורים פרטיים', 'מעונות וגנים'],
+    title: 'מזון ואירועים',
+    categories: ['מזון', 'אירועים', 'צילום', 'בימוי והפקה', 'דרמה ומשחק', 'כוריאוגרפיה ומחול', 'איור'],
   },
   {
-    title: 'אירועים ושמחות',
-    categories: ['אירועים ושמחות', 'צילום ווידאו', 'מוזיקה ונגינה', 'קייטרינג', 'פרחים ועיצוב'],
+    title: 'חינוך וילדים',
+    categories: ['לימוד', 'ילדים ונוער'],
   },
   {
     title: 'מקצועות חופשיים',
-    categories: ['משפטי ופיננסי', 'ביטוח', 'נדל"ן'],
+    categories: ['עורכי דין', 'רואי חשבון', 'ייעוץ משכנתאות', 'החזרי מס ומימוש זכויות', 'הנהלת חשבונות', 'אדריכלות ועיצוב פנים'],
   },
   {
-    title: 'טכנולוגיה ותקשורת',
-    categories: ['טכנולוגיה', 'דפוס והדפסה', 'תקשורת ופרסום', 'עיצוב גרפי'],
+    title: 'ייעוץ וטיפול',
+    categories: ['ייעוץ זוגי ושלום בית', 'הדרכת הורים', 'ייעוץ שינה', 'אבחון דידקטי', 'קלינאות תקשורת וריפוי בעיסוק', 'יועצות הנקה'],
   },
   {
-    title: 'תחבורה ולוגיסטיקה',
-    categories: ['הסעות ותחבורה', 'הובלות', 'משלוחים'],
+    title: 'פרילנס ושירותי משרד',
+    categories: ['כתיבה שיווקית וקופירייטינג', 'קלדנות ותמלול', 'תרגום', 'עריכת וידאו ומצגות', 'אפיון ועיצוב חווית משתמש', 'בניית אתרים ודפי נחיתה', 'מזכירות מרחוק וניהול משרד'],
   },
   {
-    title: 'אופנה וטקסטיל',
-    categories: ['אופנה והלבשה', 'פאות ושיער', 'תכשיטים'],
+    title: 'טכנולוגיה ותחבורה',
+    categories: ['מחשבים', 'הובלות', 'מוסך'],
   },
   {
-    title: 'יודאיקה וספרים',
-    categories: ['יודאיקה', 'ספרים והוצאה לאור', 'סת"ם'],
+    title: 'אופנה ובריאות',
+    categories: ['ביגוד', 'טיפולי שיער', 'רפואה'],
   },
   {
-    title: 'שירותים נוספים',
-    categories: ['חיות מחמד', 'אבטחה', 'מיזוג אוויר', 'מכשירי חשמל', 'תיירות ונופש', 'ספורט וכושר', 'טיפול רגשי', 'רפואה משלימה'],
+    title: 'ספרים ושירותי דת',
+    categories: ['ספרים', 'מעבדות שעטנז', 'כריכיות'],
   },
 ]
 
-// Service type definitions with visual styling
-const SERVICE_TYPES = [
+// Main service type categories (simplified for homepage - 2 main types)
+const MAIN_SERVICE_TYPES = [
   {
-    id: 'appointment',
-    name: 'קביעת תור',
-    description: 'רופאים, ספרים, מטפלים',
-    icon: Calendar,
+    id: 'services', // Combined: appointment + project + emergency
+    name: 'נותני שירות',
+    description: 'בעלי מקצוע בכל התחומים',
+    icon: Wrench,
     gradient: 'from-blue-500 to-blue-600',
     lightBg: 'bg-blue-50',
     iconBg: 'bg-blue-500',
-    examples: ['רופא שיניים', 'ספר', 'קוסמטיקאית'],
-  },
-  {
-    id: 'project',
-    name: 'פרויקטים',
-    description: 'שיפוצניקים, צלמים, גרפיקאים',
-    icon: Wrench,
-    gradient: 'from-green-500 to-emerald-600',
-    lightBg: 'bg-green-50',
-    iconBg: 'bg-green-500',
-    examples: ['שיפוצניק', 'צלם אירועים', 'מעצב גרפי'],
-  },
-  {
-    id: 'emergency',
-    name: 'שירות חירום',
-    description: 'אינסטלטורים, חשמלאים',
-    icon: AlertTriangle,
-    gradient: 'from-red-500 to-rose-600',
-    lightBg: 'bg-red-50',
-    iconBg: 'bg-red-500',
-    examples: ['אינסטלטור', 'חשמלאי', 'מנעולן'],
+    examples: ['שיפוצניק', 'רופא שיניים', 'חשמלאי', 'צלם'],
   },
   {
     id: 'retail',
@@ -366,6 +346,11 @@ export default function HomePage() {
                   חפש
                 </Button>
               </div>
+              {/* AI Disclaimer */}
+              <div className="flex items-center justify-center gap-1.5 text-xs text-white/60 mt-3">
+                <span>💡</span>
+                <span>התוצאות מופקות באמצעות AI ומיועדות לגילוי שירותים בלבד</span>
+              </div>
             </motion.div>
 
             {/* Quick Stats */}
@@ -418,7 +403,7 @@ export default function HomePage() {
         )}
       </motion.section>
 
-      {/* Service Types - Visual Cards */}
+      {/* Service Types - Visual Cards (2 Main Categories) */}
       <section>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-headline text-gray-900">מה אתה צריך היום?</h2>
@@ -429,38 +414,38 @@ export default function HomePage() {
         </div>
         
         <motion.div 
-          className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+          className="grid grid-cols-1 md:grid-cols-2 gap-4"
           variants={containerVariants}
           initial="hidden"
           animate="show"
         >
-          {SERVICE_TYPES.map((service) => {
+          {MAIN_SERVICE_TYPES.map((service) => {
             const Icon = service.icon
             return (
               <motion.div key={service.id} variants={itemVariants}>
                 <Link 
                   href={`/search?serviceType=${service.id}`}
-                  className="group block relative overflow-hidden rounded-2xl bg-white p-5 md:p-6 transition-all hover:shadow-premium hover:-translate-y-1 border border-gray-100"
+                  className="group block relative overflow-hidden rounded-2xl bg-white p-6 md:p-8 transition-all hover:shadow-premium hover:-translate-y-1 border border-gray-100"
                 >
                   {/* Icon */}
-                  <div className={`inline-flex items-center justify-center w-14 h-14 rounded-xl ${service.iconBg} text-white mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
-                    <Icon className="h-7 w-7" />
+                  <div className={`inline-flex items-center justify-center w-16 h-16 rounded-xl ${service.iconBg} text-white mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
+                    <Icon className="h-8 w-8" />
                   </div>
                   
                   {/* Content */}
-                  <h3 className="font-bold text-lg text-gray-900 mb-1 group-hover:text-primary transition-colors">
+                  <h3 className="font-bold text-xl text-gray-900 mb-2 group-hover:text-primary transition-colors">
                     {service.name}
                   </h3>
-                  <p className="text-sm text-gray-500 mb-4">
+                  <p className="text-base text-gray-500 mb-4">
                     {service.description}
                   </p>
                   
                   {/* Example Tags */}
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-2">
                     {service.examples.map((example) => (
                       <span 
                         key={example}
-                        className={`px-2.5 py-1 ${service.lightBg} text-gray-700 text-xs rounded-full`}
+                        className={`px-3 py-1.5 ${service.lightBg} text-gray-700 text-sm rounded-full`}
                       >
                         {example}
                       </span>
@@ -468,8 +453,8 @@ export default function HomePage() {
                   </div>
 
                   {/* Hover Arrow */}
-                  <div className="absolute top-5 left-5 opacity-0 group-hover:opacity-100 transition-opacity text-primary">
-                    <ArrowLeft className="h-5 w-5" />
+                  <div className="absolute top-6 left-6 opacity-0 group-hover:opacity-100 transition-opacity text-primary">
+                    <ArrowLeft className="h-6 w-6" />
                   </div>
                 </Link>
               </motion.div>

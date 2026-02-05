@@ -36,16 +36,14 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-gray-600">
               <li><Link href="/about" className="hover:text-primary transition-colors">אודות קנ"ש</Link></li>
               <li><Link href="/contact" className="hover:text-primary transition-colors">צור קשר</Link></li>
-              <li><Link href="/terms" className="hover:text-primary transition-colors">תנאי שימוש</Link></li>
-              <li><Link href="/privacy" className="hover:text-primary transition-colors">מדיניות פרטיות</Link></li>
+              <li><Link href="/terms" className="hover:text-primary transition-colors">תקנון ומדיניות פרטיות</Link></li>
             </ul>
           </div>
 
           <div>
             <h3 className="font-semibold text-gray-900 mb-4">צור קשר</h3>
             <ul className="space-y-2 text-sm text-gray-600">
-              <li>info@bul.co.il</li>
-              <li>03-123-4567</li>
+              <li>info@kanash.co.il</li>
               <li>ירושלים, ישראל</li>
             </ul>
           </div>

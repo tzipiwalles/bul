@@ -31,12 +31,19 @@ import {
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 
-// Service type definitions
+// Service type definitions (all 4 types for filtering)
 const SERVICE_TYPE_CONFIG = {
+  services: { name: 'נותני שירות', icon: Wrench, color: 'bg-blue-500', badgeColor: 'bg-blue-50 text-blue-700 border-blue-200' },
   appointment: { name: 'קביעת תור', icon: Calendar, color: 'bg-blue-500', badgeColor: 'bg-blue-50 text-blue-700 border-blue-200' },
   project: { name: 'פרויקטים', icon: Wrench, color: 'bg-green-500', badgeColor: 'bg-green-50 text-green-700 border-green-200' },
   emergency: { name: 'חירום 24/6', icon: AlertTriangle, color: 'bg-red-500', badgeColor: 'bg-red-50 text-red-700 border-red-200' },
   retail: { name: 'קניות ומסחר', icon: Store, color: 'bg-purple-500', badgeColor: 'bg-purple-50 text-purple-700 border-purple-200' },
+}
+
+// Main homepage categories (2 main types)
+const MAIN_FILTER_TYPES = {
+  services: { name: 'נותני שירות', icon: Wrench, color: 'bg-blue-500', badgeColor: 'bg-blue-50 text-blue-700 border-blue-200', dbTypes: ['appointment', 'project', 'emergency'] },
+  retail: { name: 'קניות ומסחר', icon: Store, color: 'bg-purple-500', badgeColor: 'bg-purple-50 text-purple-700 border-purple-200', dbTypes: ['retail'] },
 }
 
 // Convert database profile to display format
@@ -147,6 +154,22 @@ function SearchContent() {
   
   const feedAds = MOCK_ADS.filter(ad => ad.placement === 'feed')
   
+  // Sync state with URL params when they change
+  useEffect(() => {
+    const urlServiceType = searchParams.get('serviceType')
+    const urlCategory = searchParams.get('category')
+    const urlCity = searchParams.get('city')
+    const urlQuery = searchParams.get('q')
+    
+    // Update state from URL params
+    setSelectedServiceType(urlServiceType)
+    setSelectedCategory(urlCategory)
+    setSelectedCity(urlCity)
+    if (urlQuery !== null) {
+      setSearchQuery(urlQuery)
+    }
+  }, [searchParams]) // eslint-disable-line react-hooks/exhaustive-deps
+  
   // Count active filters
   const activeFiltersCount = [selectedCity, selectedCategory, selectedServiceType, selectedCommunity, onlyVerified, onlyWithVideo].filter(Boolean).length
   
@@ -182,7 +205,12 @@ function SearchContent() {
     
     // Apply service type filter
     if (selectedServiceType) {
-      query = query.eq('service_type', selectedServiceType)
+      if (selectedServiceType === 'services') {
+        // Combined filter for all service types (not retail)
+        query = query.in('service_type', ['appointment', 'project', 'emergency'])
+      } else {
+        query = query.eq('service_type', selectedServiceType)
+      }
     }
     
     // Apply community filter
@@ -215,7 +243,11 @@ function SearchContent() {
       query = query.contains('categories', [selectedCategory])
     }
     if (selectedServiceType) {
-      query = query.eq('service_type', selectedServiceType)
+      if (selectedServiceType === 'services') {
+        query = query.in('service_type', ['appointment', 'project', 'emergency'])
+      } else {
+        query = query.eq('service_type', selectedServiceType)
+      }
     }
     if (selectedCommunity) {
       query = query.eq('community', selectedCommunity)
@@ -382,6 +414,10 @@ function SearchContent() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            {/* AI Disclaimer */}
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 hidden sm:flex items-center gap-1">
+              <span>🤖</span>
+            </div>
           </div>
           
           {/* Filter Sheet */}
@@ -409,27 +445,27 @@ function SearchContent() {
               </SheetHeader>
               
               <div className="space-y-6 mt-6 pb-20">
-                {/* Service Type Filter - Visual Cards */}
+                {/* Service Type Filter - 2 Main Categories */}
                 <div className="space-y-3">
                   <Label className="text-base font-semibold">סוג שירות</Label>
                   <div className="grid grid-cols-2 gap-2">
-                    {Object.entries(SERVICE_TYPE_CONFIG).map(([id, config]) => {
+                    {Object.entries(MAIN_FILTER_TYPES).map(([id, config]) => {
                       const Icon = config.icon
                       const isSelected = selectedServiceType === id
                       return (
                         <button
                           key={id}
                           onClick={() => setSelectedServiceType(isSelected ? null : id)}
-                          className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all ${
+                          className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
                             isSelected 
                               ? `${config.badgeColor} border-current` 
                               : 'border-gray-100 hover:border-gray-200 bg-white'
                           }`}
                         >
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isSelected ? config.color : 'bg-gray-100'} ${isSelected ? 'text-white' : 'text-gray-500'}`}>
-                            <Icon className="h-5 w-5" />
+                          <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isSelected ? config.color : 'bg-gray-100'} ${isSelected ? 'text-white' : 'text-gray-500'}`}>
+                            <Icon className="h-6 w-6" />
                           </div>
-                          <span className={`text-xs font-medium ${isSelected ? '' : 'text-gray-600'}`}>
+                          <span className={`text-sm font-medium ${isSelected ? '' : 'text-gray-600'}`}>
                             {config.name}
                           </span>
                         </button>
@@ -586,7 +622,7 @@ function SearchContent() {
           </Sheet>
         </div>
         
-        {/* Quick Filters - Service Types */}
+        {/* Quick Filters - Service Types (2 Main Categories) */}
         <div className="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-hide">
           <Button 
             size="sm" 
@@ -596,7 +632,7 @@ function SearchContent() {
           >
             הכל
           </Button>
-          {Object.entries(SERVICE_TYPE_CONFIG).map(([id, config]) => {
+          {Object.entries(MAIN_FILTER_TYPES).map(([id, config]) => {
             const Icon = config.icon
             return (
               <Button 

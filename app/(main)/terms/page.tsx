@@ -1,76 +1,136 @@
+'use client'
+
+import { motion } from 'framer-motion'
+import { Shield, Scale, Camera, Bot, Heart, Copyright, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 export default function TermsPage() {
+  const sections = [
+    {
+      icon: Shield,
+      title: 'מהות הפלטפורמה',
+      content: 'קנ"ש היא פלטפורמת Discovery (גילוי) שנועדה לחבר בין צרכנים לבעלי עסקים מהמגזר החרדי. האתר משמש כלוח מודעות חכם בלבד.',
+    },
+    {
+      icon: Scale,
+      title: 'אי-אחריות מקצועית',
+      content: 'הנהלת האתר אינה צד בכל עסקה, הסכם או התקשרות שייחתמו בין המשתמש לבין בעל העסק. כל אחריות על טיב השירות, איכות המוצר, עמידה בלוחות זמנים או תשלומים חלה על הצדדים לעסקה בלבד.',
+    },
+    {
+      icon: Camera,
+      title: 'אמינות המידע',
+      content: 'כל התכנים, התמונות והסרטונים מועלים על ידי בעלי העסקים ובאחריותם הבלעדית. האתר אינו בודק את אמינות המצגים או את ההסמכות המקצועיות של המפרסמים.',
+    },
+    {
+      icon: Bot,
+      title: 'שימוש בטכנולוגיית AI',
+      content: 'האתר עושה שימוש בכלי בינה מלאכותית (AI) לחיפוש והתאמת שירותים. ייתכנו אי-דיוקים בתוצאות החיפוש או בהמלצות הצ\'אט, והשימוש בהם הוא באחריות המשתמש.',
+    },
+    {
+      icon: Heart,
+      title: 'ערכי הקהילה וסינון תוכן',
+      content: 'חל איסור מוחלט על העלאת תוכן שאינו הולם את רוח הקהילה החרדית, לרבות תמונות נשים או שפה שאינה נאותה. הנהלת האתר שומרת לעצמה את הזכות להסיר כל תוכן ללא הודעה מוקדמת.',
+    },
+    {
+      icon: Copyright,
+      title: 'קניין רוחני',
+      content: 'המשתמש מצהיר כי הוא בעל הזכויות בכל מדיה (תמונה/וידאו) שהוא מעלה לאתר. העלאת תוכן שאינו בבעלות המשתמש מהווה הפרה של תנאי השימוש.',
+    },
+  ]
+
   return (
-    <div className="flex flex-col gap-6 max-w-3xl">
+    <div className="max-w-4xl mx-auto py-8 px-4">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Link href="/" className="text-gray-500 hover:text-primary transition-colors">
-          <ArrowRight className="h-6 w-6" />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center mb-12"
+      >
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-6">
+          <Scale className="h-8 w-8 text-primary" />
+        </div>
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          תנאי שימוש והצהרת אי-אחריות
+        </h1>
+        <p className="text-lg text-gray-600">
+          פלטפורמת קנ"ש - קהילת נותני שירות
+        </p>
+      </motion.div>
+
+      {/* Introduction */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="bg-blue-50 border border-blue-100 rounded-2xl p-6 mb-8"
+      >
+        <p className="text-gray-700 leading-relaxed">
+          ברוכים הבאים לפלטפורמת קנ"ש. השימוש באתר מהווה הסכמה לתנאים המפורטים להלן. 
+          אנא קראו בעיון את תנאי השימוש לפני השימוש באתר.
+        </p>
+      </motion.div>
+
+      {/* Sections */}
+      <div className="space-y-6">
+        {sections.map((section, index) => {
+          const Icon = section.icon
+          return (
+            <motion.div
+              key={section.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 + index * 0.05 }}
+              className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="flex gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Icon className="h-6 w-6 text-primary" />
+                  </div>
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-2">
+                    {index + 1}. {section.title}
+                  </h2>
+                  <p className="text-gray-600 leading-relaxed">
+                    {section.content}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )
+        })}
+      </div>
+
+      {/* Contact Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="mt-12 bg-gray-50 rounded-2xl p-8 text-center"
+      >
+        <h3 className="text-xl font-bold text-gray-900 mb-3">יש לכם שאלות?</h3>
+        <p className="text-gray-600 mb-6">
+          לכל שאלה או הבהרה בנוגע לתנאי השימוש, אנא צרו עמנו קשר
+        </p>
+        <Link href="/contact">
+          <Button variant="outline" size="lg">
+            צור קשר
+            <ArrowRight className="mr-2 h-4 w-4" />
+          </Button>
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">תנאי שימוש</h1>
-      </div>
+      </motion.div>
 
-      <div className="bg-white rounded-2xl p-6 md:p-8 border border-gray-100 prose prose-gray max-w-none">
-        <p className="text-sm text-gray-500 mb-6">עודכן לאחרונה: פברואר 2026</p>
-
-        <h2>1. הקדמה</h2>
-        <p>
-          ברוכים הבאים לקנ"ש. תנאי שימוש אלה מסדירים את השימוש שלך באתר ובשירותים שלנו.
-          בהמשך השימוש באתר, אתה מסכים לתנאים אלה.
-        </p>
-
-        <h2>2. הגדרות</h2>
-        <p>
-          <strong>האתר</strong> - אתר קנ"ש בכתובת kanash.co.il<br />
-          <strong>השירות</strong> - שירותי החיפוש והחיבור בין לקוחות לבעלי מקצוע<br />
-          <strong>משתמש</strong> - כל אדם הגולש באתר או משתמש בשירותים<br />
-          <strong>בעל מקצוע</strong> - משתמש שנרשם להציע את שירותיו באתר
-        </p>
-
-        <h2>3. תנאי שימוש כלליים</h2>
-        <p>
-          השימוש באתר מותר למטרות חוקיות בלבד. אסור להשתמש באתר באופן שעלול לפגוע באתר,
-          במשתמשים אחרים או בצדדים שלישיים.
-        </p>
-
-        <h2>4. הרשמה ופרופיל</h2>
-        <p>
-          בעת הרשמה לאתר, עליך לספק מידע מדויק ועדכני. אתה אחראי לשמור על סודיות פרטי הכניסה שלך.
-          אנו שומרים את הזכות להסיר פרופילים שמפרים את תנאי השימוש.
-        </p>
-
-        <h2>5. תוכן והתנהגות</h2>
-        <p>
-          כל התוכן שאתה מעלה לאתר חייב להיות צנוע ומתאים לקהילה החרדית.
-          אסור להעלות תמונות לא צנועות, תוכן פוגעני או מידע כוזב.
-        </p>
-
-        <h2>6. אחריות</h2>
-        <p>
-          קנ"ש משמש כפלטפורמה לחיבור בין לקוחות לבעלי מקצוע בלבד.
-          איננו אחראים לאיכות השירותים שמספקים בעלי המקצוע או לכל עסקה ביניכם.
-        </p>
-
-        <h2>7. קניין רוחני</h2>
-        <p>
-          כל הזכויות באתר, כולל עיצוב, לוגו וקוד, שמורות לקנ"ש.
-          אין להעתיק, להפיץ או לעשות שימוש מסחרי בתכנים ללא אישור.
-        </p>
-
-        <h2>8. שינויים בתנאים</h2>
-        <p>
-          אנו עשויים לעדכן תנאים אלה מעת לעת. המשך השימוש באתר לאחר עדכון התנאים
-          מהווה הסכמה לתנאים המעודכנים.
-        </p>
-
-        <h2>9. יצירת קשר</h2>
-        <p>
-          לשאלות בנוגע לתנאי השימוש, ניתן לפנות אלינו בכתובת:{' '}
-          <a href="mailto:info@bul.co.il" className="text-primary hover:underline">info@bul.co.il</a>
-        </p>
-      </div>
+      {/* Last Updated */}
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.6 }}
+        className="text-center text-sm text-gray-400 mt-8"
+      >
+        עודכן לאחרונה: פברואר 2026
+      </motion.p>
     </div>
   )
 }
