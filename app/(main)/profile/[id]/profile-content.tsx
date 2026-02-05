@@ -32,20 +32,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import type { Profile, OpeningHours } from '@/types/database'
 
-interface Review {
-  id: string
-  rating: number
-  reviewer: string
-  date: string
-  text: string
-}
-
 interface ProfileContentProps {
   profile: Profile
-  reviews: Review[]
 }
 
-export default function ProfileContent({ profile, reviews }: ProfileContentProps) {
+export default function ProfileContent({ profile }: ProfileContentProps) {
   const [isAppointmentOpen, setIsAppointmentOpen] = useState(false)
   const [isLeadOpen, setIsLeadOpen] = useState(false)
   
@@ -202,7 +193,7 @@ export default function ProfileContent({ profile, reviews }: ProfileContentProps
             <div className="flex items-center gap-1 bg-yellow-50 px-3 py-1.5 rounded-xl border border-yellow-100">
               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
               <span className="font-bold text-gray-900">{profile.rating}</span>
-              <span className="text-xs text-gray-500">({profile.review_count})</span>
+              <span className="text-xs text-gray-500">ניקוד</span>
             </div>
           </div>
 
@@ -277,29 +268,15 @@ export default function ProfileContent({ profile, reviews }: ProfileContentProps
             </section>
           )}
 
-          {/* Reviews */}
+          {/* Contact / Message Section - Private messages only */}
           <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">ביקורות</h2>
-              <Button variant="outline" size="sm">כתוב ביקורת</Button>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">שלח הודעה פרטית</h2>
             </div>
-            
-            {reviews.length > 0 ? (
-              <div className="space-y-6">
-                {reviews.map((review) => (
-                  <div key={review.id} className="border-b border-gray-50 last:border-0 pb-6 last:pb-0">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="font-semibold text-gray-900">{review.reviewer}</div>
-                      <span className="text-xs text-gray-400">{new Date(review.date).toLocaleDateString('he-IL')}</span>
-                    </div>
-                    <StarRating rating={review.rating} size="sm" className="mb-2" />
-                    <p className="text-gray-600 text-sm leading-relaxed">{review.text}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-center py-8">עדיין אין ביקורות לעסק זה</p>
-            )}
+            <p className="text-gray-600 text-sm mb-4">
+              ההודעה תישלח ישירות לבעל העסק ולא תפורסם באתר
+            </p>
+            <PrivateMessageForm profileId={profile.id} businessName={profile.business_name} />
           </section>
         </div>
 
@@ -403,6 +380,29 @@ function LeadForm({ profileId, businessName }: { profileId: string; businessName
       </div>
       <Button type="submit" size="lg" className="w-full bg-primary hover:bg-primary/90 mt-2">
         שלח פניה
+      </Button>
+    </form>
+  )
+}
+
+function PrivateMessageForm({ profileId, businessName }: { profileId: string; businessName: string }) {
+  return (
+    <form className="space-y-4">
+      <div>
+        <Label>שם מלא</Label>
+        <Input placeholder="הזן שם מלא" className="mt-1.5" />
+      </div>
+      <div>
+        <Label>טלפון</Label>
+        <Input type="tel" placeholder="050-0000000" dir="ltr" className="mt-1.5" />
+      </div>
+      <div>
+        <Label>הודעה</Label>
+        <Textarea placeholder="כתוב את ההודעה שלך..." rows={3} className="mt-1.5" />
+      </div>
+      <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
+        <MessageSquare className="ml-2 h-4 w-4" />
+        שלח הודעה
       </Button>
     </form>
   )

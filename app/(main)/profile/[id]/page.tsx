@@ -17,9 +17,5 @@ export default async function ProfilePage({ params }: { params: Promise<{ id: st
     notFound()
   }
   
-  // Fetch reviews for this profile (if we had a reviews table with actual data)
-  // For now, we'll pass empty reviews
-  const reviews: Array<{ id: string; rating: number; reviewer: string; date: string; text: string }> = []
-  
-  return <ProfileContent profile={profile as Profile} reviews={reviews} />
+  return <ProfileContent profile={profile as Profile} />
 }
