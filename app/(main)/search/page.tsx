@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Search, SlidersHorizontal, X, Calendar, Wrench, AlertTriangle, Store } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Search, SlidersHorizontal, X, Calendar, Wrench, AlertTriangle, Store, Play } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ProfessionalCard, Professional } from '@/components/cards/professional-card'
+import { ProCard, Professional } from '@/components/cards/pro-card'
 import { SponsoredCard } from '@/components/ads/sponsored-card'
 import { MOCK_ADS } from '@/lib/ads-data'
 import { createClient } from '@/lib/supabase/client'
@@ -16,7 +17,6 @@ import { COMMUNITIES } from '@/lib/communities'
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -40,7 +40,7 @@ const SERVICE_TYPE_CONFIG = {
 }
 
 // Convert database profile to display format
-function profileToProfessional(profile: Profile & { media_urls?: string[] }): Professional {
+function profileToProfessional(profile: Profile & { media_urls?: string[], gallery_urls?: string[] }): Professional {
   const hasVideo = profile.media_urls && profile.media_urls.length > 0
   return {
     id: profile.id,
@@ -57,21 +57,82 @@ function profileToProfessional(profile: Profile & { media_urls?: string[] }): Pr
     avatarUrl: profile.avatar_url,
     hasVideo,
     serviceType: profile.service_type as Professional['serviceType'],
+    gender: profile.gender as 'male' | 'female' | undefined,
+    community: profile.community || undefined,
+    galleryImages: profile.gallery_urls || (profile.avatar_url ? [profile.avatar_url] : []),
   }
 }
 
 function ProfileCardSkeleton() {
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-      <div className="flex gap-4">
-        <Skeleton className="w-16 h-16 rounded-xl" />
-        <div className="flex-1 space-y-2">
-          <Skeleton className="h-5 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-          <Skeleton className="h-4 w-full" />
+    <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
+      <Skeleton className="aspect-[3/2] w-full" />
+      <div className="p-4 pt-8 space-y-3">
+        <div className="flex justify-between items-start">
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-5 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+          </div>
+          <Skeleton className="h-5 w-16" />
         </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-6 w-20 rounded-full" />
+          <Skeleton className="h-6 w-24 rounded-full" />
+        </div>
+        <Skeleton className="h-10 w-full" />
       </div>
     </div>
+  )
+}
+
+// Video Viewer Modal
+function VideoViewer({ pro, onClose }: { pro: Professional | null; onClose: () => void }) {
+  if (!pro) return null
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 bg-black flex items-center justify-center"
+      onClick={onClose}
+    >
+      <button
+        onClick={onClose}
+        className="absolute top-4 left-4 z-10 w-10 h-10 rounded-full glass-dark flex items-center justify-center"
+      >
+        <X className="h-6 w-6 text-white" />
+      </button>
+
+      <div className="absolute top-4 right-4 z-10 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white">
+          {pro.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={pro.avatarUrl} alt={pro.name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-primary flex items-center justify-center">
+              <span className="text-white font-bold">{pro.name[0]}</span>
+            </div>
+          )}
+        </div>
+        <div className="text-white">
+          <div className="font-bold">{pro.name}</div>
+          <div className="text-xs text-white/70">{pro.category}</div>
+        </div>
+      </div>
+
+      <div 
+        className="relative max-w-md w-full h-[80vh] bg-black rounded-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="w-full h-full flex items-center justify-center">
+          <div className="text-center text-white/60">
+            <Play className="h-16 w-16 mx-auto mb-4" />
+            <p>סרטון זמין בעמוד הפרופיל</p>
+          </div>
+        </div>
+      </div>
+    </motion.div>
   )
 }
 
@@ -95,6 +156,7 @@ export default function SearchPage() {
   const [onlyVerified, setOnlyVerified] = useState(false)
   const [onlyWithVideo, setOnlyWithVideo] = useState(false)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [selectedVideo, setSelectedVideo] = useState<Professional | null>(null)
   
   const feedAds = MOCK_ADS.filter(ad => ad.placement === 'feed')
   
@@ -195,10 +257,20 @@ export default function SearchPage() {
     let adIndex = 0
 
     professionals.forEach((result, index) => {
-      items.push(<ProfessionalCard key={`pro-${result.id}`} pro={result} />)
+      // Mark every 5th item as sponsored for demo
+      const isSponsored = (index + 1) % 6 === 0
+      
+      items.push(
+        <ProCard 
+          key={`pro-${result.id}`} 
+          pro={{ ...result, isSponsored }} 
+          index={index}
+          onVideoClick={(pro) => setSelectedVideo(pro)}
+        />
+      )
 
-      // Inject ad every 5 items on mobile
-      if ((index + 1) % 5 === 0 && adIndex < feedAds.length) {
+      // Inject ad every 5 items on mobile (legacy ads)
+      if ((index + 1) % 8 === 0 && adIndex < feedAds.length) {
         items.push(
           <div key={`ad-${feedAds[adIndex].id}`} className="md:hidden">
             <SponsoredCard ad={feedAds[adIndex]} />
@@ -539,10 +611,13 @@ export default function SearchPage() {
             </h1>
           </div>
 
-          <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {loading ? (
               // Loading skeletons
               <>
+                <ProfileCardSkeleton />
+                <ProfileCardSkeleton />
+                <ProfileCardSkeleton />
                 <ProfileCardSkeleton />
                 <ProfileCardSkeleton />
                 <ProfileCardSkeleton />
@@ -550,14 +625,33 @@ export default function SearchPage() {
             ) : professionals.length > 0 ? (
               renderResultsWithAds()
             ) : (
-              <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
-                <p className="text-gray-500 text-lg">לא נמצאו תוצאות</p>
-                <p className="text-gray-400 text-sm mt-2">נסה לשנות את החיפוש או המיקום</p>
+              <div className="col-span-full text-center py-16 bg-white rounded-2xl border border-gray-100">
+                <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                  <Search className="h-8 w-8 text-gray-400" />
+                </div>
+                <p className="text-gray-600 text-lg font-medium">לא נמצאו תוצאות</p>
+                <p className="text-gray-400 text-sm mt-2">נסה לשנות את החיפוש או הפילטרים</p>
+                {activeFiltersCount > 0 && (
+                  <Button 
+                    variant="outline" 
+                    className="mt-4"
+                    onClick={clearAllFilters}
+                  >
+                    נקה את כל הפילטרים
+                  </Button>
+                )}
               </div>
             )}
           </div>
         </main>
       </div>
+
+      {/* Video Viewer Modal */}
+      <AnimatePresence>
+        {selectedVideo && (
+          <VideoViewer pro={selectedVideo} onClose={() => setSelectedVideo(null)} />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
