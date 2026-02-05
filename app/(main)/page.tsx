@@ -180,27 +180,32 @@ export default function HomePage() {
     router.push(`/search?category=${encodeURIComponent(categoryName)}`)
   }
 
+  // Fetch stories and stats immediately on mount
   useEffect(() => {
     const supabase = createClient()
     
-    // Fetch profiles with videos for stories
-    async function fetchStoryProfiles() {
+    // Fetch profiles with videos for stories - run immediately
+    const fetchStoryProfiles = async () => {
+      console.log('Starting to fetch story profiles...')
+      const startTime = Date.now()
+      
       try {
         const { data, error } = await supabase
           .from('profiles')
           .select('id, business_name, avatar_url, media_urls, categories, created_at')
           .eq('is_active', true)
           .order('created_at', { ascending: false })
-          .limit(50)
+          .limit(30)
+
+        console.log(`Fetch completed in ${Date.now() - startTime}ms`)
 
         if (error) {
           console.error('Error fetching story profiles:', error)
+          setIsLoadingStories(false)
+          return
         }
 
         if (data) {
-          console.log('Raw profiles from DB:', data.length)
-          console.log('Profiles with media_urls:', data.filter(p => p.media_urls && p.media_urls.length > 0).length)
-          
           // Filter for profiles that actually have media content
           const stories: StoryProfile[] = data
             .filter(p => p.media_urls && Array.isArray(p.media_urls) && p.media_urls.length > 0)
@@ -213,7 +218,8 @@ export default function HomePage() {
               category: p.categories?.[0] || 'עסק',
               isNew: new Date(p.created_at).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000
             }))
-          console.log('Story profiles found:', stories.length, stories)
+          
+          console.log('Story profiles found:', stories.length)
           setStoryProfiles(stories)
         }
       } catch (err) {
@@ -224,7 +230,7 @@ export default function HomePage() {
     }
 
     // Fetch stats
-    async function fetchStats() {
+    const fetchStats = async () => {
       const { count } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
@@ -235,6 +241,7 @@ export default function HomePage() {
       }
     }
 
+    // Execute both fetches in parallel
     fetchStoryProfiles()
     fetchStats()
   }, [])
@@ -385,20 +392,31 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Stories Bar - Live Updates */}
-      {(isLoadingStories || storyProfiles.length > 0) && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          {isLoadingStories ? (
-            <StoriesBarSkeleton />
-          ) : (
-            <StoriesBar profiles={storyProfiles} />
-          )}
-        </motion.div>
-      )}
+      {/* Stories Bar - Live Updates - Always visible */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        {isLoadingStories ? (
+          <StoriesBarSkeleton />
+        ) : storyProfiles.length > 0 ? (
+          <StoriesBar profiles={storyProfiles} />
+        ) : (
+          // Empty state - still show the section header
+          <div className="relative overflow-hidden">
+            <div className="flex items-center justify-between mb-4 px-1">
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <div className="w-2.5 h-2.5 rounded-full bg-gray-300" />
+                </div>
+                <h2 className="font-bold text-gray-400">עדכונים חיים</h2>
+              </div>
+              <span className="text-sm text-gray-400">אין עדכונים כרגע</span>
+            </div>
+          </div>
+        )}
+      </motion.section>
 
       {/* Service Types - Visual Cards */}
       <section>
