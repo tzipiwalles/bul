@@ -38,6 +38,7 @@ export default function SettingsPage() {
     business_name: '',
     phone: '',
     whatsapp: '',
+    website_url: '',
     city: '',
     address: '',
     description: '',
@@ -260,6 +261,7 @@ export default function SettingsPage() {
         business_name: profile.business_name,
         phone: profile.phone,
         whatsapp: profile.whatsapp,
+        website_url: profile.website_url,
         city: profile.city,
         address: profile.address,
         description: profile.description,
@@ -495,6 +497,21 @@ export default function SettingsPage() {
                     className="mt-1.5" 
                   />
                 </div>
+              </div>
+              <div>
+                <Label htmlFor="website">קישור לאתר</Label>
+                <Input 
+                  id="website" 
+                  type="url" 
+                  value={profile.website_url || ''}
+                  onChange={(e) => setProfile(prev => ({ ...prev, website_url: e.target.value }))}
+                  placeholder="https://www.example.com" 
+                  dir="ltr" 
+                  className="mt-1.5" 
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  הכנס את כתובת האתר שלך כולל https://
+                </p>
               </div>
               <div>
                 <Label htmlFor="city">עיר *</Label>

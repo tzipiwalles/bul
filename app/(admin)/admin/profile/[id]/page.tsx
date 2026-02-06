@@ -45,6 +45,7 @@ export default function AdminProfileEditPage() {
     business_name: '',
     phone: '',
     whatsapp: '',
+    website_url: '',
     email: '',
     city: '',
     address: '',
@@ -246,6 +247,7 @@ export default function AdminProfileEditPage() {
         business_name: profile.business_name,
         phone: profile.phone,
         whatsapp: profile.whatsapp,
+        website_url: profile.website_url,
         email: profile.email,
         city: profile.city,
         address: profile.address,
@@ -556,6 +558,21 @@ export default function AdminProfileEditPage() {
                   className="mt-1.5" 
                 />
               </div>
+            </div>
+            <div>
+              <Label htmlFor="website">קישור לאתר</Label>
+              <Input 
+                id="website" 
+                type="url" 
+                value={profile.website_url || ''}
+                onChange={(e) => setProfile(prev => ({ ...prev, website_url: e.target.value }))}
+                placeholder="https://www.example.com" 
+                dir="ltr" 
+                className="mt-1.5" 
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                הכנס את כתובת האתר כולל https://
+              </p>
             </div>
             <div>
               <Label htmlFor="city">עיר *</Label>

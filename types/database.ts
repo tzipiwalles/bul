@@ -29,6 +29,7 @@ export interface Database {
           opening_hours: OpeningHours | null
           categories: string[]
           community: string | null
+          website_url: string | null
         }
         Insert: {
           id: string
@@ -53,6 +54,7 @@ export interface Database {
           opening_hours?: OpeningHours | null
           categories?: string[]
           community?: string | null
+          website_url?: string | null
         }
         Update: {
           id?: string
@@ -77,6 +79,7 @@ export interface Database {
           opening_hours?: OpeningHours | null
           categories?: string[]
           community?: string | null
+          website_url?: string | null
         }
       }
       reviews: {
