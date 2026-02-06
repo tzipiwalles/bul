@@ -34,7 +34,7 @@ export function Header() {
           <img 
             src="https://www.assetbridge.app/api/assets/Kanash/svg" 
             alt={t('logo')}
-            className="h-12 w-12 rounded-xl shadow-md"
+            className="h-12 w-12 rounded-xl shadow-md bg-primary p-1.5"
           />
           <div className="hidden sm:flex flex-col leading-tight">
             <span className="text-xl font-bold text-primary">{t('logo')}</span>
