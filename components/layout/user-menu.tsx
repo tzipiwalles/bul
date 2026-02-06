@@ -38,48 +38,46 @@ export function UserMenu() {
   useEffect(() => {
     async function checkUser() {
       try {
-        // Add timeout to prevent infinite loading
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Timeout')), 5000)
-        )
+        // First try getSession (faster, uses cache)
+        const { data: { session } } = await supabase.auth.getSession()
         
-        const userPromise = supabase.auth.getUser()
-        const { data: { user } } = await Promise.race([userPromise, timeoutPromise]) as Awaited<typeof userPromise>
-        
-        setUser(user)
-        
-        if (user) {
-          // Check if user has a business profile - with timeout
-          try {
-            const { data: profile } = await Promise.race([
-              supabase.from('profiles').select('id').eq('id', user.id).maybeSingle(),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('Profile timeout')), 3000))
-            ]) as { data: { id: string } | null }
+        if (session?.user) {
+          setUser(session.user)
+          
+          // Check profile and admin status in parallel with generous timeout
+          const checkPromises = async () => {
+            const [profileResult, adminResult] = await Promise.allSettled([
+              supabase.from('profiles').select('id').eq('id', session.user.id).maybeSingle(),
+              supabase.from('admins').select('user_id').eq('user_id', session.user.id).maybeSingle()
+            ])
             
-            setIsBusinessOwner(!!profile)
-          } catch (e) {
-            console.warn('Profile check failed:', e)
-            setIsBusinessOwner(false)
+            if (profileResult.status === 'fulfilled') {
+              setIsBusinessOwner(!!profileResult.value.data)
+            }
+            if (adminResult.status === 'fulfilled') {
+              setIsAdmin(!!adminResult.value.data)
+            }
           }
-
-          // Check if user is admin - with timeout
+          
+          // Run checks with timeout but don't fail if timeout
+          const timeoutPromise = new Promise<void>((resolve) => setTimeout(resolve, 8000))
+          await Promise.race([checkPromises(), timeoutPromise])
+        } else {
+          // No session, try getUser as fallback (validates with server)
           try {
-            const { data: adminData } = await Promise.race([
-              supabase.from('admins').select('user_id').eq('user_id', user.id).maybeSingle(),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('Admin timeout')), 3000))
-            ]) as { data: { user_id: string } | null }
-            
-            setIsAdmin(!!adminData)
-          } catch (e) {
-            console.warn('Admin check failed:', e)
-            setIsAdmin(false)
+            const { data: { user } } = await Promise.race([
+              supabase.auth.getUser(),
+              new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+            ])
+            setUser(user)
+          } catch {
+            // Timeout or error - no user
+            setUser(null)
           }
         }
       } catch (error) {
         console.error('UserMenu checkUser error:', error)
-        setUser(null)
-        setIsBusinessOwner(false)
-        setIsAdmin(false)
+        // Don't reset user on error - keep existing state
       } finally {
         setLoading(false)
       }
