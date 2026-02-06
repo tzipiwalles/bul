@@ -35,19 +35,10 @@ export function UserMenu() {
   const [loading, setLoading] = useState(true)
   const [supabase] = useState(() => createClient())
 
-  const handleSignOut = useCallback(async () => {
-    try {
-      await supabase.auth.signOut()
-    } catch (e) {
-      console.error('Sign out error:', e)
-    }
-    // Clear state regardless
-    setUser(null)
-    setIsBusinessOwner(false)
-    setIsAdmin(false)
-    router.push('/')
-    router.refresh()
-  }, [supabase, router])
+  const handleSignOut = useCallback(() => {
+    // Navigate to dedicated logout page that handles everything
+    window.location.href = '/logout'
+  }, [])
 
   useEffect(() => {
     let isMounted = true
