@@ -1,72 +1,91 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { Loader2 } from 'lucide-react'
 
 export default function LogoutPage() {
-  const router = useRouter()
-  const [status, setStatus] = useState('מתנתק...')
+  const [status, setStatus] = useState('מנקה נתונים...')
 
   useEffect(() => {
-    async function performLogout() {
-      try {
-        const supabase = createClient()
-        
-        // Sign out from Supabase
-        setStatus('מתנתק מ-Supabase...')
-        await supabase.auth.signOut()
-        
-        // Clear all cookies related to auth
-        setStatus('מנקה cookies...')
-        document.cookie.split(";").forEach((c) => {
-          const eqPos = c.indexOf("=")
-          const name = eqPos > -1 ? c.substring(0, eqPos) : c
-          document.cookie = name.trim() + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/"
-        })
-        
-        // Clear localStorage
-        setStatus('מנקה localStorage...')
-        try {
-          localStorage.clear()
-        } catch (e) {
-          console.warn('Could not clear localStorage:', e)
-        }
-        
-        // Clear sessionStorage
-        setStatus('מנקה sessionStorage...')
-        try {
-          sessionStorage.clear()
-        } catch (e) {
-          console.warn('Could not clear sessionStorage:', e)
-        }
-        
-        setStatus('הפנייה לדף הבית...')
-        
-        // Force a full page reload to the homepage
-        window.location.href = '/'
-        
-      } catch (error) {
-        console.error('Logout error:', error)
-        setStatus('שגיאה בהתנתקות - מנסה שוב...')
-        
-        // Even if there's an error, clear storage and redirect
-        try {
-          localStorage.clear()
-          sessionStorage.clear()
-        } catch (e) {
-          // ignore
-        }
-        
-        setTimeout(() => {
-          window.location.href = '/'
-        }, 1000)
+    // Don't use Supabase at all - just nuke everything
+    
+    // 1. Clear ALL localStorage
+    try {
+      const keysToRemove: string[] = []
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key) keysToRemove.push(key)
       }
+      keysToRemove.forEach(key => localStorage.removeItem(key))
+      setStatus('localStorage נוקה')
+    } catch (e) {
+      console.warn('localStorage clear error:', e)
     }
 
-    performLogout()
-  }, [router])
+    // 2. Clear ALL sessionStorage
+    try {
+      sessionStorage.clear()
+    } catch (e) {
+      console.warn('sessionStorage clear error:', e)
+    }
+
+    // 3. Clear ALL cookies
+    try {
+      const cookies = document.cookie.split(';')
+      for (const cookie of cookies) {
+        const name = cookie.split('=')[0].trim()
+        // Delete with all possible path combinations
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname};`
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.${window.location.hostname};`
+      }
+      setStatus('Cookies נוקו')
+    } catch (e) {
+      console.warn('Cookie clear error:', e)
+    }
+
+    // 4. Clear indexedDB if exists
+    try {
+      if (window.indexedDB) {
+        indexedDB.databases().then(dbs => {
+          dbs.forEach(db => {
+            if (db.name) indexedDB.deleteDatabase(db.name)
+          })
+        }).catch(() => {})
+      }
+    } catch (e) {
+      console.warn('indexedDB clear error:', e)
+    }
+
+    // 5. Unregister all service workers
+    try {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          registrations.forEach(reg => reg.unregister())
+        }).catch(() => {})
+      }
+    } catch (e) {
+      console.warn('SW unregister error:', e)
+    }
+
+    // 6. Clear caches
+    try {
+      if ('caches' in window) {
+        caches.keys().then(names => {
+          names.forEach(name => caches.delete(name))
+        }).catch(() => {})
+      }
+    } catch (e) {
+      console.warn('Cache clear error:', e)
+    }
+
+    setStatus('מפנה לדף הבית...')
+
+    // Wait a moment and do a HARD redirect
+    setTimeout(() => {
+      window.location.replace('/')
+    }, 1500)
+  }, [])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
