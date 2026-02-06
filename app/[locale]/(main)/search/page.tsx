@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { useTranslations } from 'next-intl'
 
 // Service type definitions (all 4 types for filtering)
 const SERVICE_TYPE_CONFIG = {
@@ -76,6 +77,7 @@ function profileToProfessional(profile: Profile & { media_urls?: string[], galle
 
 // Video Viewer Modal
 function VideoViewer({ pro, onClose }: { pro: Professional | null; onClose: () => void }) {
+  const t = useTranslations('search')
   if (!pro) return null
   
   return (
@@ -117,7 +119,7 @@ function VideoViewer({ pro, onClose }: { pro: Professional | null; onClose: () =
         <div className="w-full h-full flex items-center justify-center">
           <div className="text-center text-white/60">
             <Play className="h-16 w-16 mx-auto mb-4" />
-            <p>סרטון זמין בעמוד הפרופיל</p>
+            <p>{t('videoAvailable')}</p>
           </div>
         </div>
       </div>
@@ -128,6 +130,9 @@ function VideoViewer({ pro, onClose }: { pro: Professional | null; onClose: () =
 const ITEMS_PER_PAGE = 12
 
 function SearchContent() {
+  const t = useTranslations('search')
+  const tService = useTranslations('serviceTypes')
+  const tCommon = useTranslations('common')
   const searchParams = useSearchParams()
   const router = useRouter()
   const loadMoreRef = useRef<HTMLDivElement>(null)
@@ -180,9 +185,9 @@ function SearchContent() {
   // Get page title based on service type
   const getPageTitle = () => {
     if (selectedServiceType && SERVICE_TYPE_CONFIG[selectedServiceType as keyof typeof SERVICE_TYPE_CONFIG]) {
-      return SERVICE_TYPE_CONFIG[selectedServiceType as keyof typeof SERVICE_TYPE_CONFIG].name
+      return tService(selectedServiceType)
     }
-    return 'בעלי מקצוע'
+    return t('title')
   }
 
   // Build query with filters (for data fetching)
@@ -422,7 +427,7 @@ function SearchContent() {
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <Input
               type="text"
-              placeholder="חיפוש לפי שם, עיר או תחום..."
+              placeholder={t('searchPlaceholder')}
               className="pr-10 h-10 bg-gray-50 border-0 focus:ring-1 focus:ring-primary/20"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -448,10 +453,10 @@ function SearchContent() {
             <SheetContent side="right" className="w-[340px] overflow-y-auto">
               <SheetHeader>
                 <SheetTitle className="flex items-center justify-between">
-                  סינון תוצאות
+                  {t('filterResults')}
                   {activeFiltersCount > 0 && (
                     <Badge variant="secondary" className="bg-primary/10 text-primary">
-                      {activeFiltersCount} פילטרים פעילים
+                      {activeFiltersCount} {t('activeFilters')}
                     </Badge>
                   )}
                 </SheetTitle>
@@ -460,7 +465,7 @@ function SearchContent() {
               <div className="space-y-6 mt-6 pb-20">
                 {/* Service Type Filter - 2 Main Categories */}
                 <div className="space-y-3">
-                  <Label className="text-base font-semibold">סוג שירות</Label>
+                  <Label className="text-base font-semibold">{t('serviceType')}</Label>
                   <div className="grid grid-cols-2 gap-2">
                     {Object.entries(MAIN_FILTER_TYPES).map(([id, config]) => {
                       const Icon = config.icon
@@ -479,7 +484,7 @@ function SearchContent() {
                             <Icon className="h-6 w-6" />
                           </div>
                           <span className={`text-sm font-medium ${isSelected ? '' : 'text-gray-600'}`}>
-                            {config.name}
+                            {tService(id)}
                           </span>
                         </button>
                       )
@@ -489,13 +494,13 @@ function SearchContent() {
 
                 {/* Category Filter with Search */}
                 <div className="space-y-3">
-                  <Label className="text-base font-semibold">קטגוריה</Label>
+                  <Label className="text-base font-semibold">{t('category')}</Label>
                   <Select value={selectedCategory || '__all__'} onValueChange={(v) => setSelectedCategory(v === '__all__' ? null : v)}>
                     <SelectTrigger className="h-11">
-                      <SelectValue placeholder="כל הקטגוריות" />
+                      <SelectValue placeholder={t('allCategories')} />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
-                      <SelectItem value="__all__">כל הקטגוריות</SelectItem>
+                      <SelectItem value="__all__">{t('allCategories')}</SelectItem>
                       {CATEGORIES.map(cat => (
                         <SelectItem key={cat.id} value={cat.name}>
                           <span className="flex items-center gap-2">
@@ -510,13 +515,13 @@ function SearchContent() {
                 
                 {/* City Filter */}
                 <div className="space-y-3">
-                  <Label className="text-base font-semibold">עיר</Label>
+                  <Label className="text-base font-semibold">{tCommon('city')}</Label>
                   <Select value={selectedCity || '__all__'} onValueChange={(v) => setSelectedCity(v === '__all__' ? null : v)}>
                     <SelectTrigger className="h-11">
-                      <SelectValue placeholder="כל הערים" />
+                      <SelectValue placeholder={t('allCities')} />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
-                      <SelectItem value="__all__">כל הערים</SelectItem>
+                      <SelectItem value="__all__">{t('allCities')}</SelectItem>
                       {CITIES.map(city => (
                         <SelectItem key={city} value={city}>{city}</SelectItem>
                       ))}
@@ -542,13 +547,13 @@ function SearchContent() {
                 
                 {/* Community Filter */}
                 <div className="space-y-3">
-                  <Label className="text-base font-semibold">קהילה / חסידות</Label>
+                  <Label className="text-base font-semibold">{t('community')}</Label>
                   <Select value={selectedCommunity || '__all__'} onValueChange={(v) => setSelectedCommunity(v === '__all__' ? null : v)}>
                     <SelectTrigger className="h-11">
-                      <SelectValue placeholder="כל הקהילות" />
+                      <SelectValue placeholder={t('allCommunities')} />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
-                      <SelectItem value="__all__">כל הקהילות</SelectItem>
+                      <SelectItem value="__all__">{t('allCommunities')}</SelectItem>
                       {COMMUNITIES.map(community => (
                         <SelectItem key={community.id} value={community.id}>{community.label}</SelectItem>
                       ))}
@@ -558,7 +563,7 @@ function SearchContent() {
                 
                 {/* Toggle Filters - More Visual */}
                 <div className="space-y-3">
-                  <Label className="text-base font-semibold">סינון מתקדם</Label>
+                  <Label className="text-base font-semibold">{t('advancedFilter')}</Label>
                   <div className="space-y-2">
                     <button
                       onClick={() => setOnlyVerified(!onlyVerified)}
@@ -573,7 +578,7 @@ function SearchContent() {
                           ✓
                         </span>
                         <span className={`text-sm font-medium ${onlyVerified ? 'text-blue-700' : 'text-gray-600'}`}>
-                          מאומתים בלבד
+                          {t('verifiedOnly')}
                         </span>
                       </span>
                       <div className={`w-10 h-6 rounded-full transition-all ${onlyVerified ? 'bg-blue-500' : 'bg-gray-200'}`}>
@@ -594,7 +599,7 @@ function SearchContent() {
                           ▶
                         </span>
                         <span className={`text-sm font-medium ${onlyWithVideo ? 'text-orange-700' : 'text-gray-600'}`}>
-                          עם סרטון בלבד
+                          {t('videoOnly')}
                         </span>
                       </span>
                       <div className={`w-10 h-6 rounded-full transition-all ${onlyWithVideo ? 'bg-orange-500' : 'bg-gray-200'}`}>
@@ -616,7 +621,7 @@ function SearchContent() {
                       }}
                     >
                       <X className="h-4 w-4 ml-2" />
-                      נקה הכל ואתחל מחדש
+                      {t('clearAndReset')}
                     </Button>
                   </div>
                 )}
@@ -627,7 +632,7 @@ function SearchContent() {
                     className="w-full h-12 text-base font-bold bg-primary hover:bg-primary/90"
                     onClick={() => setIsFilterOpen(false)}
                   >
-                    הצג {totalCount} תוצאות
+                    {t('showResults')} {totalCount}
                   </Button>
                 </div>
               </div>
@@ -643,7 +648,7 @@ function SearchContent() {
             className={`rounded-full px-4 flex-shrink-0 ${!selectedServiceType ? 'bg-primary text-white hover:bg-primary/90 border-0' : 'border-gray-200 text-gray-600'}`}
             onClick={() => setSelectedServiceType(null)}
           >
-            הכל
+            {tCommon('all')}
           </Button>
           {Object.entries(MAIN_FILTER_TYPES).map(([id, config]) => {
             const Icon = config.icon
@@ -660,7 +665,7 @@ function SearchContent() {
                 onClick={() => setSelectedServiceType(selectedServiceType === id ? null : id)}
               >
                 <Icon className="h-3.5 w-3.5" />
-                {config.name}
+                {tService(id)}
               </Button>
             )
           })}
@@ -674,7 +679,7 @@ function SearchContent() {
             className={`rounded-full px-3 flex-shrink-0 text-xs ${!selectedCity ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-0' : 'border-gray-200 text-gray-500'}`}
             onClick={() => setSelectedCity(null)}
           >
-            כל הארץ
+            {tCommon('allCountry')}
           </Button>
           {['ירושלים', 'בני ברק', 'מודיעין עילית', 'ביתר עילית', 'אלעד', 'בית שמש'].map(city => (
             <Button 
@@ -700,9 +705,7 @@ function SearchContent() {
             )}
             {selectedServiceType && (
               <Badge variant="secondary" className="gap-1 bg-green-50 text-green-700">
-                {selectedServiceType === 'appointment' ? 'קביעת תור' : 
-                 selectedServiceType === 'project' ? 'פרויקטים' : 
-                 selectedServiceType === 'emergency' ? 'חירום' : 'קניות ומסחר'}
+                {tService(selectedServiceType)}
                 <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedServiceType(null)} />
               </Badge>
             )}
@@ -714,13 +717,13 @@ function SearchContent() {
             )}
             {onlyVerified && (
               <Badge variant="secondary" className="gap-1 bg-purple-50 text-purple-700">
-                מאומתים
+                {t('verified')}
                 <X className="h-3 w-3 cursor-pointer" onClick={() => setOnlyVerified(false)} />
               </Badge>
             )}
             {onlyWithVideo && (
               <Badge variant="secondary" className="gap-1 bg-secondary/10 text-secondary">
-                עם סרטון
+                {t('videoOnly')}
                 <X className="h-3 w-3 cursor-pointer" onClick={() => setOnlyWithVideo(false)} />
               </Badge>
             )}
@@ -740,7 +743,7 @@ function SearchContent() {
               )}
               {getPageTitle()}
               <span className="text-sm font-normal text-gray-500">
-                ({loading ? '...' : totalCount} תוצאות)
+                ({loading ? '...' : totalCount} {tCommon('results')})
               </span>
             </h1>
           </div>
@@ -768,7 +771,7 @@ function SearchContent() {
                   {loadingMore ? (
                     <div className="flex items-center gap-3">
                       <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                      <span className="text-sm text-muted-foreground">טוען עוד תוצאות...</span>
+                      <span className="text-sm text-muted-foreground">{t('loadingMore')}</span>
                     </div>
                   ) : hasMore ? (
                     <Button 
@@ -776,11 +779,11 @@ function SearchContent() {
                       onClick={() => loadMore()}
                       className="mx-auto"
                     >
-                      טען עוד תוצאות
+                      {t('loadMore')}
                     </Button>
                   ) : (
                     <div className="text-sm text-muted-foreground py-4">
-                      הצגת כל {professionals.length} התוצאות
+                      {t('showingAll')}
                     </div>
                   )}
                 </div>
@@ -790,15 +793,15 @@ function SearchContent() {
                 <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
                   <Search className="h-8 w-8 text-gray-400" />
                 </div>
-                <p className="text-gray-600 text-lg font-medium">לא נמצאו תוצאות</p>
-                <p className="text-gray-400 text-sm mt-2">נסה לשנות את החיפוש או הפילטרים</p>
+                <p className="text-gray-600 text-lg font-medium">{t('noResults')}</p>
+                <p className="text-gray-400 text-sm mt-2">{t('noResultsHint')}</p>
                 {activeFiltersCount > 0 && (
                   <Button 
                     variant="outline" 
                     className="mt-4"
                     onClick={clearAllFilters}
                   >
-                    נקה את כל הפילטרים
+                    {t('clearFilters')}
                   </Button>
                 )}
               </div>

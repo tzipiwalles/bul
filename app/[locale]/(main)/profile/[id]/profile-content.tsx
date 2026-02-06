@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
+import { useTranslations } from 'next-intl'
 import { motion, AnimatePresence } from 'framer-motion'
 import useEmblaCarousel from 'embla-carousel-react'
 import { 
@@ -47,6 +48,8 @@ interface ProfileContentProps {
 }
 
 export default function ProfileContent({ profile }: ProfileContentProps) {
+  const t = useTranslations('profile')
+  const tCommon = useTranslations('common')
   const [isAppointmentOpen, setIsAppointmentOpen] = useState(false)
   const [isLeadOpen, setIsLeadOpen] = useState(false)
   const [isVideoOpen, setIsVideoOpen] = useState(false)
@@ -203,23 +206,23 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
 
   // Generate tags based on profile data
   const tags = [
-    profile.is_verified ? 'מאומת' : null,
-    profile.service_type === 'emergency' ? 'זמין 24/6' : null,
+    profile.is_verified ? t('verified') : null,
+    profile.service_type === 'emergency' ? t('available247') : null,
     profile.community && profile.community !== 'general' ? profile.community : null,
   ].filter(Boolean) as string[]
 
   const getCTAConfig = () => {
     switch (serviceType) {
       case 'appointment':
-        return { icon: Calendar, label: 'קביעת תור', color: 'bg-blue-500 hover:bg-blue-600' }
+        return { icon: Calendar, label: t('bookAppointment'), color: 'bg-blue-500 hover:bg-blue-600' }
       case 'project':
-        return { icon: MessageSquare, label: 'בקש הצעת מחיר', color: 'bg-green-500 hover:bg-green-600' }
+        return { icon: MessageSquare, label: t('requestQuote'), color: 'bg-green-500 hover:bg-green-600' }
       case 'emergency':
-        return { icon: Phone, label: 'התקשר עכשיו', color: 'bg-red-500 hover:bg-red-600' }
+        return { icon: Phone, label: t('callNow'), color: 'bg-red-500 hover:bg-red-600' }
       case 'retail':
-        return { icon: Navigation, label: 'נווט לעסק', color: 'bg-purple-500 hover:bg-purple-600' }
+        return { icon: Navigation, label: t('navigateToBusiness'), color: 'bg-purple-500 hover:bg-purple-600' }
       default:
-        return { icon: Phone, label: 'צור קשר', color: 'bg-secondary hover:bg-secondary/90' }
+        return { icon: Phone, label: t('contactUs'), color: 'bg-secondary hover:bg-secondary/90' }
     }
   }
 
@@ -258,7 +261,7 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
           <Link href="/search" className="text-gray-500 hover:text-primary transition-colors">
             <ArrowRight className="h-6 w-6" />
           </Link>
-          <h1 className="text-lg font-bold text-gray-900">חזרה לתוצאות</h1>
+          <h1 className="text-lg font-bold text-gray-900">{t('backToResults')}</h1>
         </div>
 
         {/* Profile Header Card - Premium Design */}
@@ -441,14 +444,14 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
               <div className="flex items-center gap-2 glass px-4 py-2 rounded-xl shadow-sm">
                 <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                 <span className="font-bold text-xl text-gray-900">{profile.rating}</span>
-                <span className="text-xs text-gray-500">ניקוד</span>
+                <span className="text-xs text-gray-500">{t('score')}</span>
               </div>
             </div>
 
             {/* Name & Category */}
             <div className="mb-4">
               <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">{profile.business_name}</h1>
-              <p className="text-gray-600 text-lg">{profile.categories?.join(' • ') || 'שירותים'}</p>
+              <p className="text-gray-600 text-lg">{profile.categories?.join(' • ') || t('services')}</p>
             </div>
 
             {/* Info Chips */}
@@ -468,7 +471,7 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
                     : "bg-red-100 text-red-700"
                 )}>
                   <Clock className="h-4 w-4" />
-                  {isOpenNow(openingHours) ? 'פתוח עכשיו' : 'סגור כרגע'}
+                  {isOpenNow(openingHours) ? t('openNow') : t('closedNow')}
                 </span>
               )}
 
@@ -504,9 +507,9 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
           >
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <Play className="h-4 w-4" />
-              <span>{allMedia.length} תמונות וסרטונים בגלריה</span>
+              <span>{allMedia.length} {t('galleryCount')}</span>
             </div>
-            <span className="text-xs text-gray-400">החליקו או לחצו לניווט</span>
+            <span className="text-xs text-gray-400">{t('galleryNav')}</span>
           </motion.div>
         )}
 
@@ -520,9 +523,9 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              <h2 className="text-xl font-bold text-gray-900 mb-4">אודות</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">{t('aboutBusiness')}</h2>
               <p className="text-gray-600 leading-relaxed whitespace-pre-line text-lg">
-                {profile.description || 'אין תיאור זמין.'}
+                {profile.description || t('noDescription')}
               </p>
             </motion.section>
 
@@ -535,10 +538,10 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
             >
               <div className="flex items-center gap-2 mb-2">
                 <MessageSquare className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-bold text-gray-900">שלח הודעה פרטית</h2>
+                <h2 className="text-xl font-bold text-gray-900">{t('sendPrivateMessage')}</h2>
               </div>
               <p className="text-gray-500 text-sm mb-5">
-                ההודעה תישלח ישירות לבעל העסק ולא תפורסם באתר
+                {t('privateMessageNote')}
               </p>
               <PrivateMessageForm profileId={profile.id} businessName={profile.business_name} />
             </motion.section>
@@ -555,7 +558,7 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
             >
               <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <Briefcase className="h-5 w-5 text-primary" />
-                פרטי התקשרות
+                {t('contactDetails')}
               </h3>
               <div className="space-y-4">
                 <a 
@@ -566,7 +569,7 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
                     <Phone className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500">טלפון</div>
+                    <div className="text-sm text-gray-500">{t('phone')}</div>
                     <div className="font-medium text-gray-900" dir="ltr">{profile.phone}</div>
                   </div>
                 </a>
@@ -585,8 +588,8 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
                       </svg>
                     </div>
                     <div>
-                      <div className="text-sm text-gray-500">WhatsApp</div>
-                      <div className="font-medium text-[#25D366]">שלח הודעה</div>
+                      <div className="text-sm text-gray-500">{t('whatsapp')}</div>
+                      <div className="font-medium text-[#25D366]">{t('sendMessage')}</div>
                     </div>
                   </a>
                 )}
@@ -603,8 +606,8 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
                       <Globe className="h-5 w-5 text-white" />
                     </div>
                     <div>
-                      <div className="text-sm text-gray-500">אתר אינטרנט</div>
-                      <div className="font-medium text-blue-600">בקר באתר</div>
+                      <div className="text-sm text-gray-500">{t('website')}</div>
+                      <div className="font-medium text-blue-600">{t('visitWebsite')}</div>
                     </div>
                   </a>
                 )}
@@ -621,17 +624,17 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
               >
                 <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <Clock className="h-5 w-5 text-primary" />
-                  שעות פתיחה
+                  {t('openingHours')}
                 </h3>
                 <div className="space-y-2">
                   {Object.entries(openingHours).map(([day, hours]) => (
                     <div key={day} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-                      <span className="text-gray-600">{getDayName(day)}</span>
+                      <span className="text-gray-600">{getDayName(day, t)}</span>
                       <span className={cn(
                         "font-medium",
                         hours ? 'text-gray-900' : 'text-gray-400'
                       )}>
-                        {hours ? `${hours.open} - ${hours.close}` : 'סגור'}
+                        {hours ? `${hours.open} - ${hours.close}` : t('closed')}
                       </span>
                     </div>
                   ))}
@@ -673,8 +676,8 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
       <Dialog open={isAppointmentOpen} onOpenChange={setIsAppointmentOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>קביעת תור עם {profile.business_name}</DialogTitle>
-            <DialogDescription>מלא את הפרטים ונחזור אליך בהקדם</DialogDescription>
+            <DialogTitle>{t('bookWith')} {profile.business_name}</DialogTitle>
+            <DialogDescription>{t('fillDetails')}</DialogDescription>
           </DialogHeader>
           <AppointmentForm profileId={profile.id} businessName={profile.business_name} />
         </DialogContent>
@@ -684,8 +687,8 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
       <Dialog open={isLeadOpen} onOpenChange={setIsLeadOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>בקשה לפגישת ייעוץ</DialogTitle>
-            <DialogDescription>ספר לנו על הפרויקט ונחזור אליך</DialogDescription>
+            <DialogTitle>{t('consultRequest')}</DialogTitle>
+            <DialogDescription>{t('projectRequest')}</DialogDescription>
           </DialogHeader>
           <LeadForm profileId={profile.id} businessName={profile.business_name} />
         </DialogContent>
@@ -768,97 +771,94 @@ export default function ProfileContent({ profile }: ProfileContentProps) {
 }
 
 function AppointmentForm({ profileId, businessName }: { profileId: string; businessName: string }) {
+  const t = useTranslations('profile')
+  const tCommon = useTranslations('common')
   return (
     <form className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="col-span-2">
-          <Label>שם מלא</Label>
-          <Input placeholder="הזן שם מלא" className="mt-1.5 h-12" />
+          <Label>{tCommon('fullName')}</Label>
+          <Input placeholder={t('enterFullName')} className="mt-1.5 h-12" />
         </div>
         <div className="col-span-2">
-          <Label>טלפון</Label>
+          <Label>{tCommon('phone')}</Label>
           <Input type="tel" placeholder="050-0000000" dir="ltr" className="mt-1.5 h-12" />
         </div>
         <div>
-          <Label>תאריך</Label>
+          <Label>{tCommon('date')}</Label>
           <Input type="date" className="mt-1.5 h-12" />
         </div>
         <div>
-          <Label>שעה</Label>
+          <Label>{tCommon('time')}</Label>
           <Input type="time" className="mt-1.5 h-12" />
         </div>
         <div className="col-span-2">
-          <Label>הערות</Label>
-          <Textarea placeholder="פרטים נוספים..." className="mt-1.5" />
+          <Label>{tCommon('notes')}</Label>
+          <Textarea placeholder={t('additionalDetails')} className="mt-1.5" />
         </div>
       </div>
       <Button type="submit" size="lg" className="w-full h-12 bg-primary hover:bg-primary/90 mt-2">
-        שלח בקשה
+        {t('sendRequest')}
       </Button>
     </form>
   )
 }
 
 function LeadForm({ profileId, businessName }: { profileId: string; businessName: string }) {
+  const t = useTranslations('profile')
+  const tCommon = useTranslations('common')
   return (
     <form className="space-y-4">
       <div className="space-y-4">
         <div>
-          <Label>שם מלא</Label>
-          <Input placeholder="הזן שם מלא" className="mt-1.5 h-12" />
+          <Label>{tCommon('fullName')}</Label>
+          <Input placeholder={t('enterFullName')} className="mt-1.5 h-12" />
         </div>
         <div>
-          <Label>טלפון</Label>
+          <Label>{tCommon('phone')}</Label>
           <Input type="tel" placeholder="050-0000000" dir="ltr" className="mt-1.5 h-12" />
         </div>
         <div>
-          <Label>מה מהות הפניה?</Label>
-          <Textarea placeholder="ספר לנו במה נוכל לעזור..." rows={4} className="mt-1.5" />
+          <Label>{t('contactPurpose')}</Label>
+          <Textarea placeholder={t('howCanWeHelp')} rows={4} className="mt-1.5" />
         </div>
       </div>
       <Button type="submit" size="lg" className="w-full h-12 bg-primary hover:bg-primary/90 mt-2">
-        שלח פניה
+        {t('sendInquiry')}
       </Button>
     </form>
   )
 }
 
 function PrivateMessageForm({ profileId, businessName }: { profileId: string; businessName: string }) {
+  const t = useTranslations('profile')
+  const tCommon = useTranslations('common')
   return (
     <form className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label>שם מלא</Label>
-          <Input placeholder="השם שלך" className="mt-1.5 h-12" />
+          <Label>{tCommon('fullName')}</Label>
+          <Input placeholder={t('yourName')} className="mt-1.5 h-12" />
         </div>
         <div>
-          <Label>טלפון</Label>
+          <Label>{tCommon('phone')}</Label>
           <Input type="tel" placeholder="050-0000000" dir="ltr" className="mt-1.5 h-12" />
         </div>
       </div>
       <div>
-        <Label>הודעה</Label>
-        <Textarea placeholder="כתוב את ההודעה שלך..." rows={4} className="mt-1.5" />
+        <Label>{tCommon('message')}</Label>
+        <Textarea placeholder={t('writeMessage')} rows={4} className="mt-1.5" />
       </div>
       <Button type="submit" className="w-full h-12 bg-primary hover:bg-primary/90">
         <MessageSquare className="ml-2 h-5 w-5" />
-        שלח הודעה
+        {t('sendMessage')}
       </Button>
     </form>
   )
 }
 
-function getDayName(day: string): string {
-  const days: Record<string, string> = {
-    sunday: 'ראשון',
-    monday: 'שני',
-    tuesday: 'שלישי',
-    wednesday: 'רביעי',
-    thursday: 'חמישי',
-    friday: 'שישי',
-    saturday: 'שבת',
-  }
-  return days[day] || day
+function getDayName(day: string, t: (key: string) => string): string {
+  return t(`days.${day}`)
 }
 
 function isOpenNow(openingHours: OpeningHours): boolean {

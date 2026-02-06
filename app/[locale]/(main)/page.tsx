@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { Link, useRouter } from '@/i18n/navigation'
+import { useTranslations } from 'next-intl'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Search, 
@@ -41,68 +41,73 @@ import { StoriesBar, StoriesBarSkeleton } from '@/components/features/stories-ba
 import { createClient } from '@/lib/supabase/client'
 
 // Category groups for the dialog - matching actual database values
-const CATEGORY_GROUPS = [
-  {
-    title: 'בית ושיפוצים',
-    categories: ['אינסטלטורים', 'חשמלאים', 'שיפוצים', 'צביעה', 'מיזוג אוויר', 'ריהוט', 'ניקיון'],
-  },
-  {
-    title: 'מזון ואירועים',
-    categories: ['מזון', 'אירועים', 'צילום', 'בימוי והפקה', 'דרמה ומשחק', 'כוריאוגרפיה ומחול', 'איור'],
-  },
-  {
-    title: 'חינוך וילדים',
-    categories: ['לימוד', 'ילדים ונוער'],
-  },
-  {
-    title: 'מקצועות חופשיים',
-    categories: ['עורכי דין', 'רואי חשבון', 'ייעוץ משכנתאות', 'החזרי מס ומימוש זכויות', 'הנהלת חשבונות', 'אדריכלות ועיצוב פנים'],
-  },
-  {
-    title: 'ייעוץ וטיפול',
-    categories: ['ייעוץ זוגי ושלום בית', 'הדרכת הורים', 'ייעוץ שינה', 'אבחון דידקטי', 'קלינאות תקשורת וריפוי בעיסוק', 'יועצות הנקה'],
-  },
-  {
-    title: 'פרילנס ושירותי משרד',
-    categories: ['כתיבה שיווקית וקופירייטינג', 'קלדנות ותמלול', 'תרגום', 'עריכת וידאו ומצגות', 'אפיון ועיצוב חווית משתמש', 'בניית אתרים ודפי נחיתה', 'מזכירות מרחוק וניהול משרד'],
-  },
-  {
-    title: 'טכנולוגיה ותחבורה',
-    categories: ['מחשבים', 'הובלות', 'מוסך'],
-  },
-  {
-    title: 'אופנה ובריאות',
-    categories: ['ביגוד', 'טיפולי שיער', 'רפואה'],
-  },
-  {
-    title: 'ספרים ושירותי דת',
-    categories: ['ספרים', 'מעבדות שעטנז', 'כריכיות'],
-  },
-]
+// Title is a translation key; categories are actual Hebrew DB values (do NOT translate)
+function getCategoryGroups(tCatGroups: (key: string) => string) {
+  return [
+    {
+      title: tCatGroups('homeAndRenovation'),
+      categories: ['אינסטלטורים', 'חשמלאים', 'שיפוצים', 'צביעה', 'מיזוג אוויר', 'ריהוט', 'ניקיון'],
+    },
+    {
+      title: tCatGroups('foodAndEvents'),
+      categories: ['מזון', 'אירועים', 'צילום', 'בימוי והפקה', 'דרמה ומשחק', 'כוריאוגרפיה ומחול', 'איור'],
+    },
+    {
+      title: tCatGroups('educationAndKids'),
+      categories: ['לימוד', 'ילדים ונוער'],
+    },
+    {
+      title: tCatGroups('freeProfessions'),
+      categories: ['עורכי דין', 'רואי חשבון', 'ייעוץ משכנתאות', 'החזרי מס ומימוש זכויות', 'הנהלת חשבונות', 'אדריכלות ועיצוב פנים'],
+    },
+    {
+      title: tCatGroups('consultingAndTherapy'),
+      categories: ['ייעוץ זוגי ושלום בית', 'הדרכת הורים', 'ייעוץ שינה', 'אבחון דידקטי', 'קלינאות תקשורת וריפוי בעיסוק', 'יועצות הנקה'],
+    },
+    {
+      title: tCatGroups('freelanceAndOffice'),
+      categories: ['כתיבה שיווקית וקופירייטינג', 'קלדנות ותמלול', 'תרגום', 'עריכת וידאו ומצגות', 'אפיון ועיצוב חווית משתמש', 'בניית אתרים ודפי נחיתה', 'מזכירות מרחוק וניהול משרד'],
+    },
+    {
+      title: tCatGroups('techAndTransport'),
+      categories: ['מחשבים', 'הובלות', 'מוסך'],
+    },
+    {
+      title: tCatGroups('fashionAndHealth'),
+      categories: ['ביגוד', 'טיפולי שיער', 'רפואה'],
+    },
+    {
+      title: tCatGroups('booksAndReligious'),
+      categories: ['ספרים', 'מעבדות שעטנז', 'כריכיות'],
+    },
+  ]
+}
 
 // Main service type categories (simplified for homepage - 2 main types)
-const MAIN_SERVICE_TYPES = [
-  {
-    id: 'services', // Combined: appointment + project + emergency
-    name: 'נותני שירות',
-    description: 'בעלי מקצוע בכל התחומים',
-    icon: Wrench,
-    gradient: 'from-blue-500 to-blue-600',
-    lightBg: 'bg-blue-50',
-    iconBg: 'bg-blue-500',
-    examples: ['שיפוצניק', 'רופא שיניים', 'חשמלאי', 'צלם'],
-  },
-  {
-    id: 'retail',
-    name: 'קניות ומסחר',
-    description: 'חנויות, מזון, בגדים',
-    icon: Store,
-    gradient: 'from-purple-500 to-violet-600',
-    lightBg: 'bg-purple-50',
-    iconBg: 'bg-purple-500',
-    examples: ['סופר', 'מאפייה', 'חנות בגדים'],
-  },
-]
+function getMainServiceTypes(tService: (key: string) => string) {
+  return [
+    {
+      id: 'services', // Combined: appointment + project + emergency
+      name: tService('services'),
+      description: tService('servicesDesc'),
+      icon: Wrench,
+      gradient: 'from-blue-500 to-blue-600',
+      lightBg: 'bg-blue-50',
+      iconBg: 'bg-blue-500',
+      examples: tService('servicesExamples').split(', '),
+    },
+    {
+      id: 'retail',
+      name: tService('retail'),
+      description: tService('retailDesc'),
+      icon: Store,
+      gradient: 'from-purple-500 to-violet-600',
+      lightBg: 'bg-purple-50',
+      iconBg: 'bg-purple-500',
+      examples: tService('retailExamples').split(', '),
+    },
+  ]
+}
 
 // Animation variants
 const containerVariants = {
@@ -130,6 +135,12 @@ interface StoryProfile {
 
 export default function HomePage() {
   const router = useRouter()
+  const t = useTranslations('home')
+  const tService = useTranslations('serviceTypes')
+  const tCatGroups = useTranslations('categoryGroups')
+  const tStats = useTranslations('stats')
+  const tCommon = useTranslations('common')
+
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCity, setSelectedCity] = useState('')
   const [storyProfiles, setStoryProfiles] = useState<StoryProfile[]>([])
@@ -138,6 +149,9 @@ export default function HomePage() {
   const [isLoadingStories, setIsLoadingStories] = useState(true)
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false)
   const [categorySearch, setCategorySearch] = useState('')
+
+  const CATEGORY_GROUPS = useMemo(() => getCategoryGroups(tCatGroups), [tCatGroups])
+  const MAIN_SERVICE_TYPES = useMemo(() => getMainServiceTypes(tService), [tService])
 
   // Filter categories based on search
   const filteredCategoryGroups = useMemo(() => {
@@ -152,7 +166,7 @@ export default function HomePage() {
                category?.description?.toLowerCase().includes(searchLower)
       })
     })).filter(group => group.categories.length > 0)
-  }, [categorySearch])
+  }, [categorySearch, CATEGORY_GROUPS])
 
   const handleCategorySelect = (categoryName: string) => {
     setIsCategoriesOpen(false)
@@ -287,16 +301,14 @@ export default function HomePage() {
               className="inline-flex items-center gap-2 glass-dark px-4 py-2 rounded-full mb-6"
             >
               <Sparkles className="h-4 w-4 text-secondary" />
-              <span className="text-sm text-white/90">הפלטפורמה המובילה לקהילה החרדית</span>
+              <span className="text-sm text-white/90">{t('badge')}</span>
             </motion.div>
 
             <h1 className="text-display text-white mb-4">
-              מצא את <span className="text-secondary">בעל המקצוע</span>
-              <br />
-              המושלם עבורך
+              {t('heroTitle')}
             </h1>
             <p className="text-lg text-blue-100 mb-8 max-w-xl">
-              מאות בעלי מקצוע מאומתים, ביקורות אמיתיות, ושירות מותאם לקהילה.
+              {t('heroSubtitle')}
             </p>
 
             {/* Glassmorphism Search Bar */}
@@ -312,7 +324,7 @@ export default function HomePage() {
                 <div className="flex-1 relative">
                   <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                   <Input 
-                    placeholder="מה אתה מחפש? (רופא שיניים, שיפוצניק...)" 
+                    placeholder={t('searchPlaceholder')}
                     className="border-0 bg-white/50 h-14 text-gray-900 placeholder:text-gray-400 focus-visible:ring-0 px-12 rounded-xl text-base"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -326,11 +338,11 @@ export default function HomePage() {
                     <SelectTrigger className="border-0 bg-white/50 h-14 focus:ring-0 text-gray-600 rounded-xl">
                       <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4" />
-                        <SelectValue placeholder="כל הארץ" />
+                        <SelectValue placeholder={t('allCountry')} />
                       </div>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__all__">כל הארץ</SelectItem>
+                      <SelectItem value="__all__">{t('allCountry')}</SelectItem>
                       {CITIES.slice(0, 20).map(city => (
                         <SelectItem key={city} value={city}>{city}</SelectItem>
                       ))}
@@ -343,13 +355,13 @@ export default function HomePage() {
                   onClick={handleSearch}
                 >
                   <Search className="h-5 w-5 ml-2" />
-                  חפש
+                  {t('searchButton')}
                 </Button>
               </div>
               {/* AI Disclaimer */}
               <div className="flex items-center justify-center gap-1.5 text-xs text-white/60 mt-3">
                 <span>💡</span>
-                <span>התוצאות מופקות באמצעות AI ומיועדות לגילוי שירותים בלבד</span>
+                <span>{t('aiDisclaimer')}</span>
               </div>
             </motion.div>
 
@@ -362,15 +374,15 @@ export default function HomePage() {
             >
               <div className="flex items-center gap-2 text-white/80">
                 <CheckCircle2 className="h-5 w-5 text-secondary" />
-                <span>{stats.professionals}+ בעלי מקצוע</span>
+                <span>{`${stats.professionals}+ ${t('statsProfessionals')}`}</span>
               </div>
               <div className="flex items-center gap-2 text-white/80">
                 <Star className="h-5 w-5 text-secondary" />
-                <span>ביקורות מאומתות</span>
+                <span>{t('statsReviews')}</span>
               </div>
               <div className="flex items-center gap-2 text-white/80">
                 <Clock className="h-5 w-5 text-secondary" />
-                <span>זמינות 24/6</span>
+                <span>{t('statsAvailability')}</span>
               </div>
             </motion.div>
           </motion.div>
@@ -395,9 +407,9 @@ export default function HomePage() {
                 <div className="relative">
                   <div className="w-2.5 h-2.5 rounded-full bg-gray-300" />
                 </div>
-                <h2 className="font-bold text-gray-400">עדכונים חיים</h2>
+                <h2 className="font-bold text-gray-400">{t('liveUpdates')}</h2>
               </div>
-              <span className="text-sm text-gray-400">אין עדכונים כרגע</span>
+              <span className="text-sm text-gray-400">{t('noUpdates')}</span>
             </div>
           </div>
         )}
@@ -406,9 +418,9 @@ export default function HomePage() {
       {/* Service Types - Visual Cards (2 Main Categories) */}
       <section>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-headline text-gray-900">מה אתה צריך היום?</h2>
+          <h2 className="text-headline text-gray-900">{t('whatDoYouNeed')}</h2>
           <Link href="/search" className="text-primary hover:text-primary/80 text-sm font-medium flex items-center gap-1">
-            לכל השירותים
+            {t('allServices')}
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </div>
@@ -468,13 +480,13 @@ export default function HomePage() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <TrendingUp className="h-6 w-6 text-secondary" />
-            <h2 className="text-xl font-bold text-gray-900">קטגוריות פופולריות</h2>
+            <h2 className="text-xl font-bold text-gray-900">{t('popularCategories')}</h2>
           </div>
           <button 
             onClick={() => setIsCategoriesOpen(true)}
             className="text-primary hover:underline text-sm font-medium flex items-center gap-1"
           >
-            כל הקטגוריות
+            {t('allCategories')}
             <Grid3X3 className="h-4 w-4" />
           </button>
         </div>
@@ -511,10 +523,10 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-dots opacity-50" />
         <div className="relative grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {[
-            { value: `${stats.professionals}+`, label: 'בעלי מקצוע' },
-            { value: '40+', label: 'קטגוריות' },
-            { value: '50+', label: 'ערים' },
-            { value: '24/6', label: 'שירות חירום' },
+            { value: `${stats.professionals}+`, label: tStats('professionals') },
+            { value: '40+', label: tStats('categories') },
+            { value: '50+', label: tStats('cities') },
+            { value: '24/6', label: tStats('emergencyService') },
           ].map((stat, i) => (
             <motion.div 
               key={i}
@@ -532,13 +544,13 @@ export default function HomePage() {
 
       {/* How It Works */}
       <section className="bg-white rounded-3xl border border-gray-100 p-8 md:p-12">
-        <h2 className="text-headline text-gray-900 text-center mb-10">איך זה עובד?</h2>
+        <h2 className="text-headline text-gray-900 text-center mb-10">{t('howItWorks')}</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
-            { icon: Search, title: '1. חפש', desc: 'בחר קטגוריה או חפש את מה שאתה צריך' },
-            { icon: CheckCircle2, title: '2. השווה', desc: 'צפה בפרופילים, סרטונים וביקורות' },
-            { icon: Phone, title: '3. צור קשר', desc: 'פנה ישירות לבעל המקצוע' },
+            { icon: Search, title: t('step1Title'), desc: t('step1Desc') },
+            { icon: CheckCircle2, title: t('step2Title'), desc: t('step2Desc') },
+            { icon: Phone, title: t('step3Title'), desc: t('step3Desc') },
           ].map((step, i) => (
             <motion.div 
               key={i}
@@ -568,14 +580,14 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-grid-white\/10" />
         <div className="relative">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            בעל עסק? הצטרף אלינו!
+            {t('ctaTitle')}
           </h2>
           <p className="text-white/90 mb-8 max-w-md mx-auto text-lg">
-            הגע לאלפי לקוחות פוטנציאליים בקהילה. הרשמה חינמית.
+            {t('ctaSubtitle')}
           </p>
           <Link href="/register-business">
             <Button size="lg" className="bg-white text-primary hover:bg-gray-100 font-bold shadow-xl px-10 h-14 text-lg">
-              צור פרופיל עסקי בחינם
+              {t('ctaButton')}
               <ArrowLeft className="mr-2 h-5 w-5" />
             </Button>
           </Link>
@@ -586,14 +598,14 @@ export default function HomePage() {
       <Dialog open={isCategoriesOpen} onOpenChange={setIsCategoriesOpen}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle className="text-xl">כל הקטגוריות</DialogTitle>
+            <DialogTitle className="text-xl">{t('allCategories')}</DialogTitle>
           </DialogHeader>
           
           {/* Search */}
           <div className="relative">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="חפש קטגוריה..."
+              placeholder={t('searchCategories')}
               value={categorySearch}
               onChange={(e) => setCategorySearch(e.target.value)}
               className="pr-9"
@@ -613,7 +625,7 @@ export default function HomePage() {
           <div className="overflow-y-auto flex-1 mt-4 -mx-6 px-6">
             {filteredCategoryGroups.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                לא נמצאו קטגוריות מתאימות
+                {t('noCategoriesFound')}
               </div>
             ) : (
               <div className="space-y-6 pb-4">

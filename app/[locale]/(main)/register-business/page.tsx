@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { Link, useRouter } from '@/i18n/navigation'
+import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,6 +26,9 @@ import type { Gender, ServiceType } from '@/types/database'
 export default function RegisterBusinessPage() {
   const router = useRouter()
   const supabase = createClient()
+  const t = useTranslations('registerBusiness')
+  const tCommon = useTranslations('common')
+  const tService = useTranslations('serviceTypes')
   
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -106,13 +109,13 @@ export default function RegisterBusinessPage() {
 
     // Validation
     if (!businessName || !phone || !city || !category) {
-      setError('נא למלא את כל השדות הנדרשים')
+      setError(t('fillRequired'))
       setSubmitting(false)
       return
     }
 
     if (!termsAccepted) {
-      setError('יש לאשר את תנאי השימוש כדי להמשיך')
+      setError(t('acceptTerms'))
       setSubmitting(false)
       return
     }
@@ -142,7 +145,7 @@ export default function RegisterBusinessPage() {
 
       if (profileError) {
         console.error('Profile error:', profileError)
-        setError(`שגיאה ביצירת הפרופיל: ${profileError.message}`)
+        setError(`${t('profileCreateError')} ${profileError.message}`)
         setSubmitting(false)
         return
       }
@@ -153,7 +156,7 @@ export default function RegisterBusinessPage() {
       router.refresh()
     } catch (err) {
       console.error('Error:', err)
-      setError('אירעה שגיאה. נסה שוב.')
+      setError(tCommon('error'))
       setSubmitting(false)
     }
   }
@@ -173,8 +176,8 @@ export default function RegisterBusinessPage() {
           <ArrowRight className="h-5 w-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">הרשמה כבעל עסק</h1>
-          <p className="text-gray-500 text-sm">צור פרופיל עסקי והגיע ללקוחות חדשים</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
+          <p className="text-gray-500 text-sm">{t('subtitle')}</p>
         </div>
       </div>
 
@@ -182,10 +185,10 @@ export default function RegisterBusinessPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Store className="h-5 w-5" />
-            פרטי העסק
+            {t('formTitle')}
           </CardTitle>
           <CardDescription>
-            מלא את הפרטים כדי ליצור את הפרופיל העסקי שלך
+            {t('formSubtitle')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -197,19 +200,19 @@ export default function RegisterBusinessPage() {
             )}
 
             <div>
-              <Label htmlFor="businessName">שם העסק *</Label>
+              <Label htmlFor="businessName">{t('businessName')}</Label>
               <Input
                 id="businessName"
                 value={businessName}
                 onChange={(e) => setBusinessName(e.target.value)}
-                placeholder="שם העסק שלך"
+                placeholder={t('businessNamePlaceholder')}
                 className="mt-1.5"
                 required
               />
             </div>
 
             <div>
-              <Label htmlFor="phone">טלפון *</Label>
+              <Label htmlFor="phone">{t('phone')}</Label>
               <Input
                 id="phone"
                 type="tel"
@@ -223,10 +226,10 @@ export default function RegisterBusinessPage() {
             </div>
 
             <div>
-              <Label htmlFor="city">עיר *</Label>
+              <Label htmlFor="city">{t('city')}</Label>
               <Select value={city} onValueChange={setCity}>
                 <SelectTrigger className="mt-1.5">
-                  <SelectValue placeholder="בחר עיר" />
+                  <SelectValue placeholder={t('selectCity')} />
                 </SelectTrigger>
                 <SelectContent className="max-h-60">
                   {CITIES.map(c => (
@@ -237,7 +240,7 @@ export default function RegisterBusinessPage() {
             </div>
 
             <div>
-              <Label>מגדר</Label>
+              <Label>{t('gender')}</Label>
               <RadioGroup
                 value={gender}
                 onValueChange={(v) => setGender(v as Gender)}
@@ -245,49 +248,49 @@ export default function RegisterBusinessPage() {
               >
                 <div className="flex items-center space-x-2 space-x-reverse">
                   <RadioGroupItem value="male" id="male" />
-                  <Label htmlFor="male" className="cursor-pointer">גבר</Label>
+                  <Label htmlFor="male" className="cursor-pointer">{tCommon('male')}</Label>
                 </div>
                 <div className="flex items-center space-x-2 space-x-reverse">
                   <RadioGroupItem value="female" id="female" />
-                  <Label htmlFor="female" className="cursor-pointer">אישה</Label>
+                  <Label htmlFor="female" className="cursor-pointer">{tCommon('female')}</Label>
                 </div>
               </RadioGroup>
               <p className="text-xs text-muted-foreground mt-1">
-                {gender === 'male' ? 'תוכל להעלות תמונת פרופיל' : 'תוכלי להעלות לוגו עסקי בלבד'}
+                {gender === 'male' ? t('maleUploadHint') : t('femaleUploadHint')}
               </p>
             </div>
 
             <div>
-              <Label htmlFor="category">קטגוריה *</Label>
+              <Label htmlFor="category">{t('category')}</Label>
               <CategoryPicker
                 value={category}
                 onChange={setCategory}
-                placeholder="לחץ לבחירת קטגוריה"
+                placeholder={t('selectCategory')}
               />
             </div>
 
             <div>
-              <Label htmlFor="serviceType">סוג שירות</Label>
+              <Label htmlFor="serviceType">{t('serviceType')}</Label>
               <Select value={serviceType} onValueChange={(v) => setServiceType(v as ServiceType)}>
                 <SelectTrigger className="mt-1.5">
-                  <SelectValue placeholder="בחר סוג שירות" />
+                  <SelectValue placeholder={t('selectServiceType')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="appointment">קביעת תור</SelectItem>
-                  <SelectItem value="project">פרויקטים / הצעת מחיר</SelectItem>
-                  <SelectItem value="emergency">שירות חירום 24/6</SelectItem>
-                  <SelectItem value="retail">קניות ומסחר</SelectItem>
+                  <SelectItem value="appointment">{tService('appointment')}</SelectItem>
+                  <SelectItem value="project">{tService('projectQuote')}</SelectItem>
+                  <SelectItem value="emergency">{tService('emergencyService')}</SelectItem>
+                  <SelectItem value="retail">{tService('retail')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div>
-              <Label htmlFor="description">תיאור העסק</Label>
+              <Label htmlFor="description">{t('businessDescription')}</Label>
               <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="ספר על העסק שלך, הניסיון והשירותים שאתה מציע..."
+                placeholder={t('descriptionPlaceholder')}
                 rows={4}
                 className="mt-1.5"
               />
@@ -305,12 +308,12 @@ export default function RegisterBusinessPage() {
               {submitting ? (
                 <>
                   <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                  יוצר פרופיל...
+                  {t('creating')}
                 </>
               ) : (
                 <>
                   <Store className="ml-2 h-5 w-5" />
-                  צור פרופיל עסקי
+                  {t('createProfile')}
                 </>
               )}
             </Button>

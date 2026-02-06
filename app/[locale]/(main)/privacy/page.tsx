@@ -1,7 +1,12 @@
-import Link from 'next/link'
+'use client'
+
+import { Link } from '@/i18n/navigation'
+import { useTranslations } from 'next-intl'
 import { ArrowRight } from 'lucide-react'
 
 export default function PrivacyPage() {
+  const t = useTranslations('privacy')
+
   return (
     <div className="flex flex-col gap-6 max-w-3xl">
       {/* Header */}
@@ -9,83 +14,54 @@ export default function PrivacyPage() {
         <Link href="/" className="text-gray-500 hover:text-primary transition-colors">
           <ArrowRight className="h-6 w-6" />
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">מדיניות פרטיות</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
       </div>
 
       <div className="bg-white rounded-2xl p-6 md:p-8 border border-gray-100 prose prose-gray max-w-none">
-        <p className="text-sm text-gray-500 mb-6">עודכן לאחרונה: פברואר 2026</p>
+        <p className="text-sm text-gray-500 mb-6">{t('lastUpdated')}</p>
 
-        <h2>1. מבוא</h2>
-        <p>
-          קנ"ש מכבדת את פרטיותך ומחויבת להגן על המידע האישי שלך.
-          מדיניות זו מסבירה כיצד אנו אוספים, משתמשים ומגינים על המידע שלך.
-        </p>
+        <h2>{t('intro_title')}</h2>
+        <p>{t('intro_text')}</p>
 
-        <h2>2. המידע שאנו אוספים</h2>
-        <p>אנו אוספים את המידע הבא:</p>
+        <h2>{t('collect_title')}</h2>
+        <p>{t('collect_text')}</p>
         <ul>
-          <li>פרטי הרשמה: שם, אימייל, טלפון</li>
-          <li>פרטי עסק: שם העסק, קטגוריה, תיאור, מיקום</li>
-          <li>תמונות ומדיה שהעלית</li>
-          <li>היסטוריית שימוש ופעילות באתר</li>
-          <li>מידע טכני: כתובת IP, סוג דפדפן</li>
+          {t('collect_items').split('|').map((item, i) => <li key={i}>{item}</li>)}
         </ul>
 
-        <h2>3. כיצד אנו משתמשים במידע</h2>
-        <p>המידע משמש אותנו ל:</p>
+        <h2>{t('use_title')}</h2>
+        <p>{t('use_text')}</p>
         <ul>
-          <li>הפעלת האתר ומתן השירותים</li>
-          <li>יצירת קשר בנוגע לחשבונך</li>
-          <li>שיפור השירות והתאמה אישית</li>
-          <li>שליחת עדכונים והתראות (באישורך)</li>
-          <li>מניעת הונאות ושימוש לרעה</li>
+          {t('use_items').split('|').map((item, i) => <li key={i}>{item}</li>)}
         </ul>
 
-        <h2>4. שיתוף מידע</h2>
-        <p>
-          איננו מוכרים את המידע האישי שלך. המידע עשוי להיות משותף:
-        </p>
+        <h2>{t('sharing_title')}</h2>
+        <p>{t('sharing_text')}</p>
         <ul>
-          <li>עם משתמשים אחרים (פרטי פרופיל ציבוריים בלבד)</li>
-          <li>עם ספקי שירות הפועלים מטעמנו</li>
-          <li>כנדרש על פי חוק</li>
+          {t('sharing_items').split('|').map((item, i) => <li key={i}>{item}</li>)}
         </ul>
 
-        <h2>5. אבטחת מידע</h2>
-        <p>
-          אנו מיישמים אמצעי אבטחה מתקדמים להגנה על המידע שלך,
-          כולל הצפנה, גישה מוגבלת ומעקב אחר פעילות חשודה.
-        </p>
+        <h2>{t('security_title')}</h2>
+        <p>{t('security_text')}</p>
 
-        <h2>6. העוגיות שלנו</h2>
-        <p>
-          האתר משתמש בעוגיות (Cookies) לשיפור חווית השימוש,
-          ניתוח תנועה ושמירת העדפות. ניתן לנהל את העוגיות דרך הגדרות הדפדפן.
-        </p>
+        <h2>{t('cookies_title')}</h2>
+        <p>{t('cookies_text')}</p>
 
-        <h2>7. הזכויות שלך</h2>
-        <p>יש לך זכות:</p>
+        <h2>{t('rights_title')}</h2>
+        <p>{t('rights_text')}</p>
         <ul>
-          <li>לגשת למידע האישי שלך</li>
-          <li>לתקן מידע שגוי</li>
-          <li>למחוק את חשבונך ומידעך</li>
-          <li>להתנגד לעיבוד מסוים של המידע</li>
+          {t('rights_items').split('|').map((item, i) => <li key={i}>{item}</li>)}
         </ul>
 
-        <h2>8. שמירת מידע</h2>
-        <p>
-          אנו שומרים את המידע שלך כל עוד חשבונך פעיל או לפי הנדרש על פי חוק.
-          לאחר מחיקת החשבון, המידע יימחק תוך 30 יום.
-        </p>
+        <h2>{t('retention_title')}</h2>
+        <p>{t('retention_text')}</p>
 
-        <h2>9. שינויים במדיניות</h2>
-        <p>
-          אנו עשויים לעדכן מדיניות זו. נודיע על שינויים מהותיים באמצעות האתר או אימייל.
-        </p>
+        <h2>{t('changes_title')}</h2>
+        <p>{t('changes_text')}</p>
 
-        <h2>10. יצירת קשר</h2>
+        <h2>{t('contact_title')}</h2>
         <p>
-          לשאלות בנוגע לפרטיות, פנה אלינו:{' '}
+          {t('contact_text')}{' '}
           <a href="mailto:privacy@bul.co.il" className="text-primary hover:underline">privacy@bul.co.il</a>
         </p>
       </div>

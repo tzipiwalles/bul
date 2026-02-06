@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { useRouter } from '@/i18n/navigation'
+import { Link } from '@/i18n/navigation'
+import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { ProfessionalCard, Professional } from '@/components/cards/professional-card'
 import { Button } from '@/components/ui/button'
@@ -12,6 +13,8 @@ import type { Profile } from '@/types/database'
 export default function FavoritesPage() {
   const router = useRouter()
   const supabase = createClient()
+  const t = useTranslations('favorites')
+  const tCommon = useTranslations('common')
   
   const [favorites, setFavorites] = useState<Professional[]>([])
   const [loading, setLoading] = useState(true)
@@ -93,10 +96,10 @@ export default function FavoritesPage() {
     return (
       <div className="min-h-[50vh] flex flex-col items-center justify-center text-center px-4">
         <Heart className="h-16 w-16 text-gray-300 mb-4" />
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">התחבר כדי לראות את המועדפים</h1>
-        <p className="text-gray-500 mb-6">שמור בעלי מקצוע אהובים וגש אליהם בקלות</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('loginTitle')}</h1>
+        <p className="text-gray-500 mb-6">{t('loginSubtitle')}</p>
         <Link href="/login">
-          <Button>התחברות</Button>
+          <Button>{tCommon('login')}</Button>
         </Link>
       </div>
     )
@@ -109,18 +112,18 @@ export default function FavoritesPage() {
           <ArrowRight className="h-5 w-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">המועדפים שלי</h1>
-          <p className="text-gray-500 text-sm">{favorites.length} בעלי מקצוע שמורים</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
+          <p className="text-gray-500 text-sm">{t('savedCount', { count: favorites.length })}</p>
         </div>
       </div>
 
       {favorites.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
           <Heart className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 text-lg">אין לך עדיין מועדפים</p>
-          <p className="text-gray-400 text-sm mt-2">לחץ על הלב בכרטיס בעל מקצוע כדי לשמור אותו</p>
+          <p className="text-gray-500 text-lg">{t('empty')}</p>
+          <p className="text-gray-400 text-sm mt-2">{t('emptyHint')}</p>
           <Link href="/search">
-            <Button className="mt-6">חפש בעלי מקצוע</Button>
+            <Button className="mt-6">{t('searchPros')}</Button>
           </Link>
         </div>
       ) : (

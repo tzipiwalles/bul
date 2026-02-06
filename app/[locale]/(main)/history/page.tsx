@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
+import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { History, ArrowRight, Loader2, Phone, MessageCircle, Calendar, Eye } from 'lucide-react'
@@ -27,20 +28,22 @@ const activityIcons: Record<string, React.ReactNode> = {
   lead_sent: <MessageCircle className="h-4 w-4" />,
 }
 
-const activityLabels: Record<string, string> = {
-  view: 'צפית בפרופיל',
-  call: 'התקשרת',
-  whatsapp: 'שלחת וואטסאפ',
-  appointment_request: 'בקשת תור',
-  lead_sent: 'שלחת פנייה',
-}
-
 export default function HistoryPage() {
   const supabase = createClient()
+  const t = useTranslations('history')
+  const tCommon = useTranslations('common')
   
   const [activities, setActivities] = useState<ActivityItem[]>([])
   const [loading, setLoading] = useState(true)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  const activityLabels: Record<string, string> = {
+    view: t('view'),
+    call: t('call'),
+    whatsapp: t('whatsapp'),
+    appointment_request: t('appointmentRequest'),
+    lead_sent: t('leadSent'),
+  }
 
   useEffect(() => {
     async function loadHistory() {
@@ -96,10 +99,10 @@ export default function HistoryPage() {
     return (
       <div className="min-h-[50vh] flex flex-col items-center justify-center text-center px-4">
         <History className="h-16 w-16 text-gray-300 mb-4" />
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">התחבר כדי לראות את ההיסטוריה</h1>
-        <p className="text-gray-500 mb-6">עקוב אחרי הפעילות שלך עם בעלי מקצוע</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('loginTitle')}</h1>
+        <p className="text-gray-500 mb-6">{t('loginSubtitle')}</p>
         <Link href="/login">
-          <Button>התחברות</Button>
+          <Button>{tCommon('login')}</Button>
         </Link>
       </div>
     )
@@ -113,10 +116,10 @@ export default function HistoryPage() {
     const diffHours = Math.floor(diffMs / 3600000)
     const diffDays = Math.floor(diffMs / 86400000)
 
-    if (diffMins < 1) return 'עכשיו'
-    if (diffMins < 60) return `לפני ${diffMins} דקות`
-    if (diffHours < 24) return `לפני ${diffHours} שעות`
-    if (diffDays < 7) return `לפני ${diffDays} ימים`
+    if (diffMins < 1) return t('now')
+    if (diffMins < 60) return t('minutesAgo', { count: diffMins })
+    if (diffHours < 24) return t('hoursAgo', { count: diffHours })
+    if (diffDays < 7) return t('daysAgo', { count: diffDays })
     
     return date.toLocaleDateString('he-IL')
   }
@@ -128,18 +131,18 @@ export default function HistoryPage() {
           <ArrowRight className="h-5 w-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">היסטוריית פעילות</h1>
-          <p className="text-gray-500 text-sm">הפעילות האחרונה שלך באתר</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
+          <p className="text-gray-500 text-sm">{t('subtitle')}</p>
         </div>
       </div>
 
       {activities.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
           <History className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 text-lg">אין פעילות עדיין</p>
-          <p className="text-gray-400 text-sm mt-2">התחל לחפש בעלי מקצוע</p>
+          <p className="text-gray-500 text-lg">{t('empty')}</p>
+          <p className="text-gray-400 text-sm mt-2">{t('emptyHint')}</p>
           <Link href="/search">
-            <Button className="mt-6">חפש בעלי מקצוע</Button>
+            <Button className="mt-6">{t('searchPros')}</Button>
           </Link>
         </div>
       ) : (

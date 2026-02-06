@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { Link, useRouter } from '@/i18n/navigation'
+import { useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,6 +16,8 @@ function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
+  const t = useTranslations('auth')
+  const tCommon = useTranslations('common')
   
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -28,21 +31,21 @@ function LoginContent() {
     const messageParam = searchParams.get('message')
     
     if (errorParam) {
-      let errorMessage = 'אירעה שגיאה בהתחברות'
+      let errorMessage = t('authError')
       
       if (errorParam === 'auth_callback_error') {
-        errorMessage = 'שגיאה בהתחברות. נסה שוב.'
+        errorMessage = t('authCallbackError')
       } else if (errorParam === 'exchange_failed') {
-        errorMessage = `שגיאה בהתחברות: ${messageParam || 'נסה שוב'}`
+        errorMessage = t('exchangeFailed', { message: messageParam || '' })
       } else if (errorParam === 'no_code') {
-        errorMessage = 'לא התקבל קוד אימות. נסה שוב.'
+        errorMessage = t('noCode')
       } else if (messageParam) {
         errorMessage = messageParam
       }
       
       setError(errorMessage)
     }
-  }, [searchParams])
+  }, [searchParams, t])
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true)
@@ -57,11 +60,11 @@ function LoginContent() {
       })
 
       if (error) {
-        setError('שגיאה בהתחברות עם Google')
+        setError(t('googleError'))
         setGoogleLoading(false)
       }
     } catch (err) {
-      setError('אירעה שגיאה. נסה שוב.')
+      setError(t('genericError'))
       setGoogleLoading(false)
     }
   }
@@ -79,9 +82,9 @@ function LoginContent() {
 
       if (error) {
         if (error.message === 'Invalid login credentials') {
-          setError('אימייל או סיסמה שגויים')
+          setError(t('invalidCredentials'))
         } else {
-          setError('אירעה שגיאה. נסה שוב.')
+          setError(t('genericError'))
         }
         return
       }
@@ -89,7 +92,7 @@ function LoginContent() {
       router.push('/dashboard')
       router.refresh()
     } catch (err) {
-      setError('אירעה שגיאה. נסה שוב.')
+      setError(t('genericError'))
     } finally {
       setLoading(false)
     }
@@ -100,11 +103,11 @@ function LoginContent() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <Link href="/" className="text-3xl font-bold text-primary mb-2 block">
-            קנ"ש
+            {t('brandName')}
           </Link>
-          <CardTitle className="text-2xl">התחברות</CardTitle>
+          <CardTitle className="text-2xl">{t('loginTitle')}</CardTitle>
           <CardDescription>
-            התחבר לחשבון שלך כדי לנהל את העסק
+            {t('loginSubtitle')}
           </CardDescription>
         </CardHeader>
         
@@ -117,7 +120,7 @@ function LoginContent() {
             )}
             
             <div className="space-y-2">
-              <Label htmlFor="email">אימייל</Label>
+              <Label htmlFor="email">{tCommon('email')}</Label>
               <div className="relative">
                 <Mail className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -134,7 +137,7 @@ function LoginContent() {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="password">סיסמה</Label>
+              <Label htmlFor="password">{tCommon('password')}</Label>
               <div className="relative">
                 <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -161,10 +164,10 @@ function LoginContent() {
               {loading ? (
                 <>
                   <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                  מתחבר...
+                  {t('loggingIn')}
                 </>
               ) : (
-                'התחבר'
+                t('loginButton')
               )}
             </Button>
             
@@ -173,7 +176,7 @@ function LoginContent() {
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-muted-foreground">או</span>
+                <span className="bg-white px-2 text-muted-foreground">{t('or')}</span>
               </div>
             </div>
             
@@ -188,7 +191,7 @@ function LoginContent() {
               {googleLoading ? (
                 <>
                   <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                  מתחבר...
+                  {t('loggingIn')}
                 </>
               ) : (
                 <>
@@ -210,15 +213,15 @@ function LoginContent() {
                       fill="#EA4335"
                     />
                   </svg>
-                  התחבר עם Google
+                  {t('loginWithGoogle')}
                 </>
               )}
             </Button>
             
             <p className="text-sm text-muted-foreground text-center">
-              אין לך חשבון?{' '}
+              {t('noAccount')}{' '}
               <Link href="/register" className="text-primary hover:underline font-medium">
-                הרשמה בחינם
+                {t('registerFree')}
               </Link>
             </p>
           </CardFooter>

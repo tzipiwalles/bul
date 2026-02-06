@@ -2,40 +2,43 @@
 
 import { motion } from 'framer-motion'
 import { Shield, Scale, Camera, Bot, Heart, Copyright, ArrowRight } from 'lucide-react'
-import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
 
 export default function TermsPage() {
+  const t = useTranslations('terms')
+
   const sections = [
     {
       icon: Shield,
-      title: 'מהות הפלטפורמה',
-      content: 'קנ"ש היא פלטפורמת Discovery (גילוי) שנועדה לחבר בין צרכנים לבעלי עסקים מהמגזר החרדי. האתר משמש כלוח מודעות חכם בלבד.',
+      title: t('platformNature'),
+      content: t('platformNatureText'),
     },
     {
       icon: Scale,
-      title: 'אי-אחריות מקצועית',
-      content: 'הנהלת האתר אינה צד בכל עסקה, הסכם או התקשרות שייחתמו בין המשתמש לבין בעל העסק. כל אחריות על טיב השירות, איכות המוצר, עמידה בלוחות זמנים או תשלומים חלה על הצדדים לעסקה בלבד.',
+      title: t('noLiability'),
+      content: t('noLiabilityText'),
     },
     {
       icon: Camera,
-      title: 'אמינות המידע',
-      content: 'כל התכנים, התמונות והסרטונים מועלים על ידי בעלי העסקים ובאחריותם הבלעדית. האתר אינו בודק את אמינות המצגים או את ההסמכות המקצועיות של המפרסמים.',
+      title: t('infoReliability'),
+      content: t('infoReliabilityText'),
     },
     {
       icon: Bot,
-      title: 'שימוש בטכנולוגיית AI',
-      content: 'האתר עושה שימוש בכלי בינה מלאכותית (AI) לחיפוש והתאמת שירותים. ייתכנו אי-דיוקים בתוצאות החיפוש או בהמלצות הצ\'אט, והשימוש בהם הוא באחריות המשתמש.',
+      title: t('aiUsage'),
+      content: t('aiUsageText'),
     },
     {
       icon: Heart,
-      title: 'ערכי הקהילה וסינון תוכן',
-      content: 'חל איסור מוחלט על העלאת תוכן שאינו הולם את רוח הקהילה החרדית, לרבות תמונות נשים או שפה שאינה נאותה. הנהלת האתר שומרת לעצמה את הזכות להסיר כל תוכן ללא הודעה מוקדמת.',
+      title: t('communityValues'),
+      content: t('communityValuesText'),
     },
     {
       icon: Copyright,
-      title: 'קניין רוחני',
-      content: 'המשתמש מצהיר כי הוא בעל הזכויות בכל מדיה (תמונה/וידאו) שהוא מעלה לאתר. העלאת תוכן שאינו בבעלות המשתמש מהווה הפרה של תנאי השימוש.',
+      title: t('intellectualProperty'),
+      content: t('intellectualPropertyText'),
     },
   ]
 
@@ -51,10 +54,10 @@ export default function TermsPage() {
           <Scale className="h-8 w-8 text-primary" />
         </div>
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-          תנאי שימוש והצהרת אי-אחריות
+          {t('pageTitle')}
         </h1>
         <p className="text-lg text-gray-600">
-          פלטפורמת קנ"ש - קהילת נותני שירות
+          {t('pageSubtitle')}
         </p>
       </motion.div>
 
@@ -66,8 +69,7 @@ export default function TermsPage() {
         className="bg-blue-50 border border-blue-100 rounded-2xl p-6 mb-8"
       >
         <p className="text-gray-700 leading-relaxed">
-          ברוכים הבאים לפלטפורמת קנ"ש. השימוש באתר מהווה הסכמה לתנאים המפורטים להלן. 
-          אנא קראו בעיון את תנאי השימוש לפני השימוש באתר.
+          {t('intro')} {t('readCarefully')}
         </p>
       </motion.div>
 
@@ -110,13 +112,13 @@ export default function TermsPage() {
         transition={{ delay: 0.5 }}
         className="mt-12 bg-gray-50 rounded-2xl p-8 text-center"
       >
-        <h3 className="text-xl font-bold text-gray-900 mb-3">יש לכם שאלות?</h3>
+        <h3 className="text-xl font-bold text-gray-900 mb-3">{t('questionsTitle')}</h3>
         <p className="text-gray-600 mb-6">
-          לכל שאלה או הבהרה בנוגע לתנאי השימוש, אנא צרו עמנו קשר
+          {t('questionsText')}
         </p>
         <Link href="/contact">
           <Button variant="outline" size="lg">
-            צור קשר
+            {t('contactLink')}
             <ArrowRight className="mr-2 h-4 w-4" />
           </Button>
         </Link>
@@ -129,7 +131,7 @@ export default function TermsPage() {
         transition={{ delay: 0.6 }}
         className="text-center text-sm text-gray-400 mt-8"
       >
-        עודכן לאחרונה: פברואר 2026
+        {t('lastUpdated')}
       </motion.p>
     </div>
   )
