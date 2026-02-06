@@ -1,19 +1,20 @@
 "use client"
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { Link, usePathname } from '@/i18n/navigation'
 import { Home, Search, User, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const navItems = [
-  { href: '/', label: 'ראשי', icon: Home },
-  { href: '/search', label: 'חיפוש', icon: Search },
-  { href: '/add', label: 'פרסם', icon: Plus, highlight: true },
-  { href: '/dashboard', label: 'אזור אישי', icon: User },
-]
-
 export function BottomNav() {
   const pathname = usePathname()
+  const t = useTranslations('bottomNav')
+
+  const navItems = [
+    { href: '/' as const, label: t('home'), icon: Home },
+    { href: '/search' as const, label: t('search'), icon: Search },
+    { href: '/register-business' as const, label: t('publish'), icon: Plus, highlight: true },
+    { href: '/dashboard' as const, label: t('personalArea'), icon: User },
+  ]
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe z-50 md:hidden">

@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/i18n/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import {
@@ -28,6 +29,8 @@ import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 export function UserMenu() {
   const router = useRouter()
+  const t = useTranslations('userMenu')
+  const tCommon = useTranslations('common')
   
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [isBusinessOwner, setIsBusinessOwner] = useState(false)
@@ -172,7 +175,7 @@ export function UserMenu() {
         <DropdownMenuContent className="w-48" align="end">
           <DropdownMenuItem onClick={handleSignOut} className="text-red-600 cursor-pointer">
             <LogOut className="ml-2 h-4 w-4" />
-            <span>התנתקות (אילוץ)</span>
+            <span>{tCommon('forceLogout')}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -185,12 +188,12 @@ export function UserMenu() {
       <div className="flex items-center gap-2">
         <Link href="/login">
           <Button variant="ghost" className="hidden text-gray-600 hover:text-primary sm:flex">
-            התחברות
+            {tCommon('login')}
           </Button>
         </Link>
         <Link href="/register">
           <Button className="bg-primary text-white hover:bg-primary/90 shadow-md shadow-blue-900/10 rounded-full px-6">
-            הצטרפות
+            {tCommon('register')}
           </Button>
         </Link>
       </div>
@@ -237,13 +240,13 @@ export function UserMenu() {
         <DropdownMenuItem asChild>
           <Link href="/favorites" className="flex items-center cursor-pointer">
             <Heart className="ml-2 h-4 w-4" />
-            <span>המועדפים שלי</span>
+            <span>{t('favorites')}</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/history" className="flex items-center cursor-pointer">
             <History className="ml-2 h-4 w-4" />
-            <span>היסטוריה</span>
+            <span>{t('history')}</span>
           </Link>
         </DropdownMenuItem>
         
@@ -255,13 +258,13 @@ export function UserMenu() {
             <DropdownMenuItem asChild>
               <Link href="/dashboard" className="flex items-center cursor-pointer">
                 <LayoutDashboard className="ml-2 h-4 w-4" />
-                <span>לוח בקרה עסקי</span>
+                <span>{t('dashboard')}</span>
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href="/dashboard/settings" className="flex items-center cursor-pointer">
                 <Settings className="ml-2 h-4 w-4" />
-                <span>עריכת פרופיל עסקי</span>
+                <span>{t('editProfile')}</span>
               </Link>
             </DropdownMenuItem>
           </>
@@ -269,7 +272,7 @@ export function UserMenu() {
           <DropdownMenuItem asChild>
             <Link href="/register-business" className="flex items-center cursor-pointer text-primary">
               <Store className="ml-2 h-4 w-4" />
-              <span>הרשמה כבעל עסק</span>
+              <span>{t('registerBusiness')}</span>
             </Link>
           </DropdownMenuItem>
         )}
@@ -281,7 +284,7 @@ export function UserMenu() {
             <DropdownMenuItem asChild>
               <Link href="/admin" className="flex items-center cursor-pointer text-yellow-600">
                 <Shield className="ml-2 h-4 w-4" />
-                <span>ניהול האתר</span>
+                <span>{t('adminPanel')}</span>
               </Link>
             </DropdownMenuItem>
           </>
@@ -291,7 +294,7 @@ export function UserMenu() {
         
         <DropdownMenuItem onClick={handleSignOut} className="text-red-600 cursor-pointer">
           <LogOut className="ml-2 h-4 w-4" />
-          <span>התנתקות</span>
+          <span>{t('logout')}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

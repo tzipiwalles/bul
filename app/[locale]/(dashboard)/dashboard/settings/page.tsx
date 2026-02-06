@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { CITIES } from '@/lib/constants'
+import { LOCATIONS, getCitiesForCountry } from '@/lib/locations'
 import { CategoryPicker } from '@/components/category-picker'
 import { COMMUNITIES } from '@/lib/communities'
 import { createClient } from '@/lib/supabase/client'
@@ -39,6 +40,7 @@ export default function SettingsPage() {
     phone: '',
     whatsapp: '',
     website_url: '',
+    country: 'IL',
     city: '',
     address: '',
     description: '',
@@ -513,6 +515,24 @@ export default function SettingsPage() {
                   הכנס את כתובת האתר שלך כולל https://
                 </p>
               </div>
+              <div>
+                <Label htmlFor="country">׳׳“׳™׳ ׳”</Label>
+                <select
+                  id="country"
+                  value={profile.country || 'IL'}
+                  onChange={(e) => setProfile(prev => ({ ...prev, country: e.target.value, city: '' }))}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1.5"
+                >
+                  <option value="IL">׳™׳©׳¨׳׳ נ‡®נ‡±</option>
+                  <option value="US">׳׳¨׳¦׳•׳× ׳”׳‘׳¨׳™׳× נ‡÷נ‡¸</option>
+                  <option value="GB">׳‘׳¨׳™׳˜׳ ׳™׳” נ‡¬נ‡§</option>
+                  <option value="CA">׳§׳ ׳“׳” נ‡¨נ‡¦</option>
+                  <option value="FR">׳¦׳¨׳₪׳× נ‡«נ‡·</option>
+                  <option value="BE">׳‘׳׳’׳™׳” נ‡§נ‡×</option>
+                  <option value="AR">׳׳¨׳’׳ ׳˜׳™׳ ׳” נ‡¦נ‡·</option>
+                </select>
+              </div>
+
               <div>
                 <Label htmlFor="city">עיר *</Label>
                 <Select 

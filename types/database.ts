@@ -30,6 +30,7 @@ export interface Database {
           categories: string[]
           community: string | null
           website_url: string | null
+          country: string
         }
         Insert: {
           id: string
@@ -55,6 +56,7 @@ export interface Database {
           categories?: string[]
           community?: string | null
           website_url?: string | null
+          country?: string
         }
         Update: {
           id?: string
@@ -80,6 +82,7 @@ export interface Database {
           categories?: string[]
           community?: string | null
           website_url?: string | null
+          country?: string
         }
       }
       reviews: {

@@ -10,6 +10,8 @@ import { ProCard, Professional, ProCardSkeleton } from '@/components/cards/pro-c
 import { SponsoredCard } from '@/components/ads/sponsored-card'
 import { MOCK_ADS } from '@/lib/ads-data'
 import { createClient } from '@/lib/supabase/client'
+import { useLocation } from '@/lib/context/location-context'
+import { getCitiesForCountry } from '@/lib/locations'
 import type { Profile } from '@/types/database'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CITIES, CATEGORIES } from '@/lib/constants'
@@ -153,6 +155,8 @@ function SearchContent() {
   const [selectedVideo, setSelectedVideo] = useState<Professional | null>(null)
   
   const feedAds = MOCK_ADS.filter(ad => ad.placement === 'feed')
+  const { selectedCountry: locationCountry } = useLocation()
+  const countryCities = getCitiesForCountry(locationCountry, 'he')
   
   // Sync state with URL params when they change
   useEffect(() => {
@@ -187,6 +191,11 @@ function SearchContent() {
       .from('profiles')
       .select('*')
       .eq('is_active', true)
+    
+    // Apply country filter from location context
+    if (locationCountry) {
+      query = query.eq('country', locationCountry)
+    }
     
     // Apply search filter
     if (searchQuery) {
@@ -224,7 +233,7 @@ function SearchContent() {
     }
     
     return query
-  }, [searchQuery, selectedCity, selectedCategory, selectedServiceType, selectedCommunity, onlyVerified])
+  }, [searchQuery, selectedCity, selectedCategory, selectedServiceType, selectedCommunity, onlyVerified, locationCountry])
 
   // Build count query (separate to avoid double select)
   const buildCountQuery = useCallback((supabase: ReturnType<typeof createClient>) => {
@@ -232,6 +241,10 @@ function SearchContent() {
       .from('profiles')
       .select('*', { count: 'exact', head: true })
       .eq('is_active', true)
+    
+    if (locationCountry) {
+      query = query.eq('country', locationCountry)
+    }
     
     if (searchQuery) {
       query = query.or(`business_name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%`)
@@ -257,7 +270,7 @@ function SearchContent() {
     }
     
     return query
-  }, [searchQuery, selectedCity, selectedCategory, selectedServiceType, selectedCommunity, onlyVerified])
+  }, [searchQuery, selectedCity, selectedCategory, selectedServiceType, selectedCommunity, onlyVerified, locationCountry])
 
   // Initial fetch
   useEffect(() => {
