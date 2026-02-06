@@ -13,7 +13,23 @@ export function createClient(): SupabaseClient<any> {
   
   client = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        // Use a consistent storage key to prevent lock conflicts
+        storageKey: 'kanash-auth',
+        // Reduce lock acquisition timeout
+        lockAcquireTimeoutMs: 3000,
+        // Don't auto refresh - we'll handle it manually
+        autoRefreshToken: true,
+        // Detect session from URL (for OAuth redirects)
+        detectSessionInUrl: true,
+        // Persist session in localStorage
+        persistSession: true,
+        // Use default flow type
+        flowType: 'pkce',
+      },
+    }
   )
   
   return client

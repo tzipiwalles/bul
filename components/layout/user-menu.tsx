@@ -33,7 +33,9 @@ export function UserMenu() {
   const [isBusinessOwner, setIsBusinessOwner] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [supabase] = useState(() => createClient())
+  
+  // Get the singleton client - don't create in useState to avoid issues with Strict Mode
+  const supabase = createClient()
 
   const handleSignOut = useCallback(() => {
     // Navigate to dedicated logout page that handles everything
