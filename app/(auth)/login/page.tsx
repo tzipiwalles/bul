@@ -1,17 +1,19 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, Mail, Lock, Chrome } from 'lucide-react'
+import { Suspense } from 'react'
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
   
   const [email, setEmail] = useState('')
@@ -19,6 +21,28 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
+  // Check for URL error parameters
+  useEffect(() => {
+    const errorParam = searchParams.get('error')
+    const messageParam = searchParams.get('message')
+    
+    if (errorParam) {
+      let errorMessage = 'אירעה שגיאה בהתחברות'
+      
+      if (errorParam === 'auth_callback_error') {
+        errorMessage = 'שגיאה בהתחברות. נסה שוב.'
+      } else if (errorParam === 'exchange_failed') {
+        errorMessage = `שגיאה בהתחברות: ${messageParam || 'נסה שוב'}`
+      } else if (errorParam === 'no_code') {
+        errorMessage = 'לא התקבל קוד אימות. נסה שוב.'
+      } else if (messageParam) {
+        errorMessage = messageParam
+      }
+      
+      setError(errorMessage)
+    }
+  }, [searchParams])
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true)
@@ -201,5 +225,17 @@ export default function LoginPage() {
         </form>
       </Card>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   )
 }
