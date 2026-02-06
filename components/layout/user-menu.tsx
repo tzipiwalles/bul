@@ -37,19 +37,38 @@ export function UserMenu() {
 
   useEffect(() => {
     async function checkUser() {
+      const startTime = Date.now()
+      console.log('[UserMenu] Starting auth check...')
+      
       try {
         // First try getSession (faster, uses cache)
-        const { data: { session } } = await supabase.auth.getSession()
+        console.log('[UserMenu] Calling getSession...')
+        const sessionStart = Date.now()
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        console.log('[UserMenu] getSession completed in', Date.now() - sessionStart, 'ms', {
+          hasSession: !!session,
+          hasUser: !!session?.user,
+          userId: session?.user?.id?.substring(0, 8),
+          error: sessionError?.message
+        })
         
         if (session?.user) {
           setUser(session.user)
+          console.log('[UserMenu] User set from session, checking profile/admin...')
           
           // Check profile and admin status in parallel with generous timeout
           const checkPromises = async () => {
+            const checksStart = Date.now()
             const [profileResult, adminResult] = await Promise.allSettled([
               supabase.from('profiles').select('id').eq('id', session.user.id).maybeSingle(),
               supabase.from('admins').select('user_id').eq('user_id', session.user.id).maybeSingle()
             ])
+            console.log('[UserMenu] Profile/Admin checks completed in', Date.now() - checksStart, 'ms', {
+              profileStatus: profileResult.status,
+              profileData: profileResult.status === 'fulfilled' ? !!profileResult.value.data : null,
+              adminStatus: adminResult.status,
+              adminData: adminResult.status === 'fulfilled' ? !!adminResult.value.data : null
+            })
             
             if (profileResult.status === 'fulfilled') {
               setIsBusinessOwner(!!profileResult.value.data)
@@ -60,25 +79,39 @@ export function UserMenu() {
           }
           
           // Run checks with timeout but don't fail if timeout
-          const timeoutPromise = new Promise<void>((resolve) => setTimeout(resolve, 8000))
+          const timeoutPromise = new Promise<void>((resolve) => {
+            setTimeout(() => {
+              console.log('[UserMenu] Profile/Admin check timeout (8s)')
+              resolve()
+            }, 8000)
+          })
           await Promise.race([checkPromises(), timeoutPromise])
         } else {
           // No session, try getUser as fallback (validates with server)
+          console.log('[UserMenu] No session, trying getUser fallback...')
           try {
-            const { data: { user } } = await Promise.race([
+            const getUserStart = Date.now()
+            const { data: { user }, error: userError } = await Promise.race([
               supabase.auth.getUser(),
               new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
             ])
+            console.log('[UserMenu] getUser completed in', Date.now() - getUserStart, 'ms', {
+              hasUser: !!user,
+              userId: user?.id?.substring(0, 8),
+              error: userError?.message
+            })
             setUser(user)
-          } catch {
+          } catch (e) {
             // Timeout or error - no user
+            console.log('[UserMenu] getUser failed:', e instanceof Error ? e.message : 'Unknown error')
             setUser(null)
           }
         }
       } catch (error) {
-        console.error('UserMenu checkUser error:', error)
+        console.error('[UserMenu] checkUser error:', error)
         // Don't reset user on error - keep existing state
       } finally {
+        console.log('[UserMenu] Auth check completed in', Date.now() - startTime, 'ms')
         setLoading(false)
       }
     }
