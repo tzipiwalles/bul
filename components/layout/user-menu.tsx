@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -28,91 +28,92 @@ import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 export function UserMenu() {
   const router = useRouter()
-  const supabase = createClient()
   
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [isBusinessOwner, setIsBusinessOwner] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [supabase] = useState(() => createClient())
+
+  const handleSignOut = useCallback(async () => {
+    try {
+      await supabase.auth.signOut()
+    } catch (e) {
+      console.error('Sign out error:', e)
+    }
+    // Clear state regardless
+    setUser(null)
+    setIsBusinessOwner(false)
+    setIsAdmin(false)
+    router.push('/')
+    router.refresh()
+  }, [supabase, router])
 
   useEffect(() => {
+    let isMounted = true
+    
+    // Force end loading after 5 seconds no matter what
+    const maxLoadingTimeout = setTimeout(() => {
+      if (isMounted && loading) {
+        console.log('[UserMenu] Force ending loading after 5s timeout')
+        setLoading(false)
+      }
+    }, 5000)
+
     async function checkUser() {
-      const startTime = Date.now()
       console.log('[UserMenu] Starting auth check...')
       
       try {
         // First try getSession (faster, uses cache)
-        console.log('[UserMenu] Calling getSession...')
-        const sessionStart = Date.now()
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-        console.log('[UserMenu] getSession completed in', Date.now() - sessionStart, 'ms', {
+        
+        console.log('[UserMenu] getSession result:', {
           hasSession: !!session,
           hasUser: !!session?.user,
-          userId: session?.user?.id?.substring(0, 8),
           error: sessionError?.message
         })
         
+        if (!isMounted) return
+        
         if (session?.user) {
           setUser(session.user)
-          console.log('[UserMenu] User set from session, checking profile/admin...')
           
-          // Check profile and admin status in parallel with generous timeout
-          const checkPromises = async () => {
-            const checksStart = Date.now()
-            const [profileResult, adminResult] = await Promise.allSettled([
-              supabase.from('profiles').select('id').eq('id', session.user.id).maybeSingle(),
-              supabase.from('admins').select('user_id').eq('user_id', session.user.id).maybeSingle()
-            ])
-            console.log('[UserMenu] Profile/Admin checks completed in', Date.now() - checksStart, 'ms', {
-              profileStatus: profileResult.status,
-              profileData: profileResult.status === 'fulfilled' ? !!profileResult.value.data : null,
-              adminStatus: adminResult.status,
-              adminData: adminResult.status === 'fulfilled' ? !!adminResult.value.data : null
-            })
-            
-            if (profileResult.status === 'fulfilled') {
-              setIsBusinessOwner(!!profileResult.value.data)
-            }
-            if (adminResult.status === 'fulfilled') {
-              setIsAdmin(!!adminResult.value.data)
-            }
-          }
-          
-          // Run checks with timeout but don't fail if timeout
-          const timeoutPromise = new Promise<void>((resolve) => {
-            setTimeout(() => {
-              console.log('[UserMenu] Profile/Admin check timeout (8s)')
-              resolve()
-            }, 8000)
-          })
-          await Promise.race([checkPromises(), timeoutPromise])
-        } else {
-          // No session, try getUser as fallback (validates with server)
-          console.log('[UserMenu] No session, trying getUser fallback...')
+          // Check profile and admin status - don't wait forever
           try {
-            const getUserStart = Date.now()
-            const { data: { user }, error: userError } = await Promise.race([
-              supabase.auth.getUser(),
-              new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+            const [profileResult, adminResult] = await Promise.race([
+              Promise.allSettled([
+                supabase.from('profiles').select('id').eq('id', session.user.id).maybeSingle(),
+                supabase.from('admins').select('user_id').eq('user_id', session.user.id).maybeSingle()
+              ]),
+              new Promise<PromiseSettledResult<{ data: unknown }>[]>((resolve) => 
+                setTimeout(() => resolve([
+                  { status: 'rejected', reason: 'timeout' },
+                  { status: 'rejected', reason: 'timeout' }
+                ] as PromiseSettledResult<{ data: unknown }>[]), 4000)
+              )
             ])
-            console.log('[UserMenu] getUser completed in', Date.now() - getUserStart, 'ms', {
-              hasUser: !!user,
-              userId: user?.id?.substring(0, 8),
-              error: userError?.message
-            })
-            setUser(user)
+            
+            if (isMounted) {
+              if (profileResult.status === 'fulfilled') {
+                setIsBusinessOwner(!!(profileResult.value as { data: unknown }).data)
+              }
+              if (adminResult.status === 'fulfilled') {
+                setIsAdmin(!!(adminResult.value as { data: unknown }).data)
+              }
+            }
           } catch (e) {
-            // Timeout or error - no user
-            console.log('[UserMenu] getUser failed:', e instanceof Error ? e.message : 'Unknown error')
-            setUser(null)
+            console.warn('[UserMenu] Profile/Admin check error:', e)
           }
+        } else {
+          setUser(null)
         }
       } catch (error) {
         console.error('[UserMenu] checkUser error:', error)
-        // Don't reset user on error - keep existing state
       } finally {
-        console.log('[UserMenu] Auth check completed in', Date.now() - startTime, 'ms')
-        setLoading(false)
+        if (isMounted) {
+          console.log('[UserMenu] Auth check completed')
+          setLoading(false)
+        }
       }
     }
 
@@ -121,6 +122,9 @@ export function UserMenu() {
     // Listen to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('[UserMenu] Auth state changed:', event)
+        if (!isMounted) return
+        
         setUser(session?.user ?? null)
         
         if (session?.user) {
@@ -131,10 +135,9 @@ export function UserMenu() {
               .eq('id', session.user.id)
               .maybeSingle()
             
-            setIsBusinessOwner(!!profile)
-          } catch (e) {
-            console.warn('Profile check on auth change failed:', e)
-            setIsBusinessOwner(false)
+            if (isMounted) setIsBusinessOwner(!!profile)
+          } catch {
+            if (isMounted) setIsBusinessOwner(false)
           }
 
           try {
@@ -144,32 +147,42 @@ export function UserMenu() {
               .eq('user_id', session.user.id)
               .maybeSingle()
             
-            setIsAdmin(!!adminData)
-          } catch (e) {
-            console.warn('Admin check on auth change failed:', e)
-            setIsAdmin(false)
+            if (isMounted) setIsAdmin(!!adminData)
+          } catch {
+            if (isMounted) setIsAdmin(false)
           }
         } else {
-          setIsBusinessOwner(false)
-          setIsAdmin(false)
+          if (isMounted) {
+            setIsBusinessOwner(false)
+            setIsAdmin(false)
+          }
         }
       }
     )
 
-    return () => subscription.unsubscribe()
-  }, [supabase])
+    return () => {
+      isMounted = false
+      clearTimeout(maxLoadingTimeout)
+      subscription.unsubscribe()
+    }
+  }, [supabase, loading])
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/')
-    router.refresh()
-  }
-
+  // Loading state - but clickable to sign out!
   if (loading) {
     return (
-      <Button variant="ghost" size="icon" disabled>
-        <Loader2 className="h-5 w-5 animate-spin" />
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="relative">
+            <Loader2 className="h-5 w-5 animate-spin" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-48" align="end">
+          <DropdownMenuItem onClick={handleSignOut} className="text-red-600 cursor-pointer">
+            <LogOut className="ml-2 h-4 w-4" />
+            <span>התנתקות (אילוץ)</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     )
   }
 
