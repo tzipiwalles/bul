@@ -19,7 +19,7 @@ export async function GET(request: Request) {
   // Handle OAuth errors from provider
   if (error_param) {
     console.error('[Auth Callback] OAuth error:', error_param, error_description)
-    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error_param)}&message=${encodeURIComponent(error_description || '')}`)
+    return NextResponse.redirect(`${origin}/he/login?error=${encodeURIComponent(error_param)}&message=${encodeURIComponent(error_description || '')}`)
   }
 
   if (code) {
@@ -42,15 +42,15 @@ export async function GET(request: Request) {
       
       if (error) {
         console.error('[Auth Callback] Exchange error:', error.message)
-        return NextResponse.redirect(`${origin}/login?error=exchange_failed&message=${encodeURIComponent(error.message)}`)
+        return NextResponse.redirect(`${origin}/he/login?error=exchange_failed&message=${encodeURIComponent(error.message)}`)
       }
     } catch (e) {
       console.error('[Auth Callback] Unexpected error:', e)
-      return NextResponse.redirect(`${origin}/login?error=unexpected_error&message=${encodeURIComponent(e instanceof Error ? e.message : 'Unknown error')}`)
+      return NextResponse.redirect(`${origin}/he/login?error=unexpected_error&message=${encodeURIComponent(e instanceof Error ? e.message : 'Unknown error')}`)
     }
   }
 
   // No code provided
   console.log('[Auth Callback] No code provided')
-  return NextResponse.redirect(`${origin}/login?error=no_code`)
+  return NextResponse.redirect(`${origin}/he/login?error=no_code`)
 }
