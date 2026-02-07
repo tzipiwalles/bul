@@ -36,9 +36,9 @@ export function Header() {
             alt={t('logo')}
             className="h-12 w-12 rounded-xl shadow-md bg-primary p-1.5"
           />
-          <div className="hidden sm:flex flex-col leading-tight">
-            <span className="text-xl font-bold text-primary">{t('logo')}</span>
-            <span className="text-xs text-gray-500">{t('subtitle')}</span>
+          <div className="flex flex-col leading-tight">
+            <span className="text-lg sm:text-xl font-bold text-primary">{t('logo')}</span>
+            <span className="text-[10px] sm:text-xs text-gray-500 hidden xs:block">{t('subtitle')}</span>
           </div>
         </Link>
 
