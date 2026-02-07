@@ -471,5 +471,9 @@
     "categories": "Categories",
     "cities": "Cities",
     "emergencyService": "Emergency Service"
+  },
+  "demoBanner": {
+    "title": "Demo Site",
+    "message": "Businesses and data are for demonstration purposes only"
   }
 }
